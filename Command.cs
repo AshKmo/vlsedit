@@ -25,4 +25,18 @@ namespace VLSEdit
             Editor.Instance.AddBox(newBox);
         }
     }
+
+    public class SaveCommand
+    {
+        public SaveCommand()
+        {
+        }
+
+        public void Execute()
+        {
+            Editor.Instance.Save();
+
+            Editor.Instance.View.Alert("Saved successfully", 2000);
+        }
+    }
 }

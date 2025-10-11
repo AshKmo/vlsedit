@@ -210,6 +210,11 @@ namespace VLSEdit
                     Editor.Instance.SelectedBoxWidget = null;
                 }
             }
+
+            if (SplashKit.KeyTyped(KeyCode.SKey))
+            {
+                new SaveCommand().Execute();
+            }
         }
 
         private bool MouseWithinBoxWidget(BoxWidget widget)

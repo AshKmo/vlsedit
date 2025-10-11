@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using SplashKitSDK;
 
 namespace VLSEdit
@@ -48,14 +49,44 @@ namespace VLSEdit
 
         public abstract Box Clone();
 
-        public virtual void Serialise(StreamWriter writer)
+        public virtual void Serialise(StringWriter writer)
         {
+            writer.WriteLine(Name);
+
+            writer.WriteLine(X);
+            writer.WriteLine(Y);
         }
 
-        public static Box Deserialise(StreamReader reader)
+        public static Box FromString(StringReader reader)
         {
-            return new NullBox();
+            Box? newBox = null;
+
+            string boxName = reader.ReadLine()!;
+
+            switch (boxName)
+            {
+                case "Null":
+                    newBox = new NullBox();
+                    break;
+                case "Add":
+                    newBox = new AddBox();
+                    break;
+            }
+
+            if (newBox == null)
+            {
+                throw new Exception("box not recognised: " + boxName);
+            }
+
+            newBox.X = Double.Parse(reader.ReadLine()!);
+            newBox.Y = Double.Parse(reader.ReadLine()!);
+
+            newBox.Deserialise(reader);
+
+            return newBox;
         }
+
+        public abstract void Deserialise(StringReader reader);
 
         public abstract Value Interpret(Value context, ServerNode node);
     }
@@ -76,12 +107,12 @@ namespace VLSEdit
             return new NullBox();
         }
 
-        public override void Serialise(StreamWriter writer)
+        public override void Serialise(StringWriter writer)
         {
             base.Serialise(writer);
         }
 
-        public static void FromString(StreamReader reader)
+        public override void Deserialise(StringReader reader)
         {
         }
 
@@ -110,12 +141,12 @@ namespace VLSEdit
             return new AddBox();
         }
 
-        public override void Serialise(StreamWriter writer)
+        public override void Serialise(StringWriter writer)
         {
             base.Serialise(writer);
         }
 
-        public static void FromString(StreamReader reader)
+        public override void Deserialise(StringReader reader)
         {
         }
 

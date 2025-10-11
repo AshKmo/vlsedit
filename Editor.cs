@@ -8,6 +8,8 @@ namespace VLSEdit
     {
         private static Editor? _instance = null;
 
+        private string? _scriptPath = null;
+
         private KVMView _view = new KVMView();
 
         private KVMController _controller = new KVMController();
@@ -55,6 +57,8 @@ namespace VLSEdit
 
         public void OpenScript(string scriptPath)
         {
+            _scriptPath = scriptPath;
+
             _script = ScriptLoader.LoadScript(scriptPath);
         }
 
@@ -108,6 +112,11 @@ namespace VLSEdit
                     }
                 }
             }
+        }
+
+        public void Save()
+        {
+            ScriptLoader.SaveScript(_scriptPath!, _script);
         }
     }
 }

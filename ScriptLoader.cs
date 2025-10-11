@@ -21,18 +21,36 @@ namespace VLSEdit
 
             return result;
         }
-        
+
         public static Script ParseScript(string scriptText)
         {
             Script script = new Script();
 
             StringReader reader = new StringReader(scriptText);
 
-            // TODO: parsing stuff
+            script.Deserialise(reader);
 
             reader.Close();
 
             return script;
+        }
+
+        public static void SaveScript(string path, Script script)
+        {
+            StreamWriter writer = new StreamWriter(path);
+
+            writer.Write(UnparseScript(script));
+
+            writer.Close();
+        }
+        
+        public static string UnparseScript(Script script)
+        {
+            StringWriter writer = new StringWriter();
+
+            script.Serialise(writer);
+
+            return writer.ToString();
         }
     }
 }

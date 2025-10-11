@@ -1,5 +1,8 @@
-myeasylog.log
 bin/
 lib/
 obj/
 planning/
+
+myeasylog.log
+
+test.vls

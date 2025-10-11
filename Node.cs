@@ -22,10 +22,10 @@ namespace VLSEdit
         {
         }
     }
-    
+
     public class ServerNode : Node
     {
-        private Guid _id = new Guid();
+        private Guid _id = Guid.NewGuid();
 
         public Guid ID { get { return _id; } }
 
