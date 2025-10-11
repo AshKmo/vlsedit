@@ -1,0 +1,28 @@
+using SplashKitSDK;
+
+namespace VLSEdit
+{
+    public abstract class Command
+    {
+        public abstract void Execute();
+    }
+
+    public class CloneCommand
+    {
+        public CloneCommand()
+        {
+        }
+
+        public void Execute()
+        {
+            if (Editor.Instance.SelectedBoxWidget == null) return;
+
+            Box newBox = Editor.Instance.SelectedBoxWidget.Box.Clone();
+
+            newBox.X = SplashKit.MouseX() - Editor.Instance.View.OffsetX;
+            newBox.Y = SplashKit.MouseY() - Editor.Instance.View.OffsetY;
+
+            Editor.Instance.AddBox(newBox);
+        }
+    }
+}
