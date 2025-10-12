@@ -4,9 +4,9 @@ namespace VLSEdit
 {
     public static class Constants
     {
-        public static int WINDOW_WIDTH = 1280;
+        public static int WINDOW_WIDTH = 1800;
 
-        public static int WINDOW_HEIGHT = 720;
+        public static int WINDOW_HEIGHT = 900;
 
         public static double BOX_WIDTH = 200;
 
