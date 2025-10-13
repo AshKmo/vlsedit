@@ -183,7 +183,23 @@ namespace VLSEdit
                 {
                     NodeWidget? nodeWidget = FindNodeWidget(topBoxWidget);
 
-                    if (nodeWidget != null)
+                    if (nodeWidget == null)
+                    {
+                        if (topBoxWidget.Box is ValueBox && topBoxWidget.Box.Mutable)
+                        {
+                            ValueBox valueBox = (ValueBox)topBoxWidget.Box;
+
+                            try
+                            {
+                                valueBox.SetValue(valueBox.Value.NewFromString(GUIPrompt.Ask("Enter the new value for this box:")));
+                            }
+                            catch
+                            {
+                                Editor.Instance.View.Alert("Failed to parse input", 1500);
+                            }
+                        }
+                    }
+                    else
                     {
                         if (nodeWidget.Node is ClientNode)
                         {

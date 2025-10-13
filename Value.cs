@@ -2,11 +2,20 @@ namespace VLSEdit
 {
     public abstract class Value
     {
+        public abstract string StringRepresentation { get; }
+
         public abstract bool IsEqualTo(Value x);
+
+        public virtual Value NewFromString(string value)
+        {
+            return new NullValue();
+        }
     }
 
     public class NullValue : Value
     {
+        public override string StringRepresentation { get { return "Null"; } }
+
         public NullValue()
         {
         }
@@ -43,6 +52,8 @@ namespace VLSEdit
         private int _value;
 
         public int Value { get { return _value; } }
+
+        public override string StringRepresentation { get { return Value.ToString(); } }
 
         public IntegerValue(int value)
         {
@@ -107,6 +118,11 @@ namespace VLSEdit
         {
             return x is IntegerValue && _value == ((IntegerValue)x).Value;
         }
+
+        public override IntegerValue NewFromString(string value)
+        {
+            return new IntegerValue(Int32.Parse(value));
+        }
     }
 
     public class DoubleValue : NumberValue
@@ -114,6 +130,8 @@ namespace VLSEdit
         private double _value;
 
         public double Value { get { return _value; } }
+
+        public override string StringRepresentation { get { return Value.ToString(); } }
 
         public DoubleValue(double value)
         {
@@ -171,6 +189,11 @@ namespace VLSEdit
         {
             return x is DoubleValue && _value == ((DoubleValue)x).Value;
         }
+
+        public override DoubleValue NewFromString(string value)
+        {
+            return new DoubleValue(Double.Parse(value));
+        }
     }
 
     class BoolValue : Value
@@ -178,6 +201,8 @@ namespace VLSEdit
         private bool _value;
 
         public bool Value { get { return _value; } }
+
+        public override string StringRepresentation { get { return Value.ToString(); } }
 
         public BoolValue(bool value)
         {
@@ -202,6 +227,11 @@ namespace VLSEdit
         public override bool IsEqualTo(Value x)
         {
             return x is BoolValue && _value == ((BoolValue)x).Value;
+        }
+
+        public override BoolValue NewFromString(string value)
+        {
+            return new BoolValue(bool.Parse(value));
         }
     }
 }

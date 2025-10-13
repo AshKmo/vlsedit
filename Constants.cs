@@ -12,7 +12,7 @@ namespace VLSEdit
 
         public static double BOX_TITLE_HEIGHT = 25;
 
-        public static double BOX_OUTLINE_WIDTH = 5;
+        public static double BOX_OUTLINE_WIDTH = 3;
 
         public static double NODE_HEIGHT = 20;
 
@@ -24,7 +24,7 @@ namespace VLSEdit
 
         public static Color BOX_BACKGROUND_COLOR = Color.Gray;
 
-        public static Color BOX_OUTLINE_COLOR = Color.LightGray;
+        public static Color BOX_OUTLINE_COLOR = Color.White;
 
         public static Color LINK_LINE_COLOR = Color.White;
 

@@ -15,24 +15,31 @@ namespace VLSEdit
             switch (args[0])
             {
                 case "edit":
-                    Window window = new Window("VLSEdit", Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
-
-                    SplashKit.WindowSetIcon(window, SplashKit.LoadBitmap("icon", "icon.png"));
-
-                    Editor.Instance.OpenScript(args[1]);
-
-                    while (!window.CloseRequested)
                     {
-                        SplashKit.ProcessEvents();
+                        Window window = new Window("VLSEdit", Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
 
-                        Editor.Instance.Tick();
+                        SplashKit.WindowSetIcon(window, SplashKit.LoadBitmap("icon", "icon.png"));
 
-                        SplashKit.RefreshScreen(Constants.FRAMERATE);
+                        Editor.Instance.OpenScript(args[1]);
+
+                        while (!window.CloseRequested)
+                        {
+                            SplashKit.ProcessEvents();
+
+                            Editor.Instance.Tick();
+
+                            SplashKit.RefreshScreen(Constants.FRAMERATE);
+                        }
+
+                        window.Close();
                     }
-
-                    window.Close();
                     break;
                 case "run":
+                    {
+                        Runner.Instance.OpenScript(args[1]);
+
+                        Runner.Instance.Run();
+                    }
                     break;
                 default:
                     Console.WriteLine("Sub-command must be either 'run' or 'edit'");

@@ -41,7 +41,11 @@ namespace VLSEdit
 
         private Editor()
         {
+            AddInitialBox(new StartBox());
+            AddInitialBox(new PrintBox());
             AddInitialBox(new NullBox());
+            AddInitialBox(new IntegerBox(new IntegerValue(0)));
+            AddInitialBox(new DoubleBox(new DoubleValue(0)));
             AddInitialBox(new AddBox());
 
             double newHeight = 20;
