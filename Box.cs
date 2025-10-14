@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
 using SplashKitSDK;
 
@@ -83,6 +84,39 @@ namespace VLSEdit
                 case "Double":
                     newBox = new DoubleBox(new DoubleValue(0));
                     break;
+                case "Subtract":
+                    newBox = new SubtractBox();
+                    break;
+                case "Multiply":
+                    newBox = new MultiplyBox();
+                    break;
+                case "Divide":
+                    newBox = new DivideBox();
+                    break;
+                case "Negate":
+                    newBox = new NegateBox();
+                    break;
+                case "If":
+                    newBox = new IfBox();
+                    break;
+                case "Call":
+                    newBox = new CallBox();
+                    break;
+                case "Ask":
+                    newBox = new AskBox();
+                    break;
+                case "Call Value":
+                    newBox = new CallValueBox();
+                    break;
+                case "Are Equal?":
+                    newBox = new EqualBox();
+                    break;
+                case "String":
+                    newBox = new StringBox(new StringValue(""));
+                    break;
+                case "String To Number":
+                    newBox = new ToNumberBox();
+                    break;
             }
 
             if (newBox == null)
@@ -110,21 +144,36 @@ namespace VLSEdit
 
     public abstract class ValueBox : Box
     {
-        private Value _value;
-
-        protected ServerNode _valueNode;
-
-        public override List<Node> Nodes { get { return new List<Node> { _valueNode }; } }
+        protected readonly Node _valueNode;
 
         public override Color Color { get { return Color.Cyan; } }
 
-        public Value Value { get { return _value; } }
+        public override List<Node> Nodes { get { return new List<Node> { _valueNode }; } }
 
         protected ValueBox()
         {
-            _value = new NullValue();
+            _valueNode = new ServerNode(Name, this);
+        }
 
-            _valueNode = new ServerNode("", this);
+        public override void Serialise(StringWriter writer)
+        {
+            base.Serialise(writer);
+        }
+
+        public override void Deserialise(StringReader reader)
+        {
+        }
+    }
+
+    public abstract class SettableValueBox : ValueBox
+    {
+        private Value _value;
+
+        public Value Value { get { return _value; } }
+
+        protected SettableValueBox()
+        {
+            _value = new NullValue();
         }
 
         public override Value Interpret(Value context, ServerNode node)
@@ -132,15 +181,29 @@ namespace VLSEdit
             return Value;
         }
 
-        public virtual void SetValue(Value value)
+        public void SetValue(Value value)
         {
             _value = value;
 
-            _valueNode.Name = value.StringRepresentation;
+            if (Value.StringRepresentation.Length > 20)
+            {
+                _valueNode.Name = value.StringRepresentation.Substring(0, Math.Min(17, value.StringRepresentation.Length)) + "...";
+            }
+            else
+            {
+                _valueNode.Name = value.StringRepresentation;
+            }
+        }
+
+        public override void Serialise(StringWriter writer)
+        {
+            base.Serialise(writer);
+
+            writer.WriteLine(Value.StringRepresentation);
         }
     }
 
-    public class IntegerBox : ValueBox
+    public class IntegerBox : SettableValueBox
     {
         public override string Name { get { return "Integer"; } }
 
@@ -154,20 +217,13 @@ namespace VLSEdit
             return new IntegerBox((IntegerValue)Value);
         }
 
-        public override void Serialise(StringWriter writer)
-        {
-            base.Serialise(writer);
-
-            writer.WriteLine(Value.StringRepresentation);
-        }
-
         public override void Deserialise(StringReader reader)
         {
             SetValue(new IntegerValue(0).NewFromString(reader.ReadLine()!));
         }
     }
 
-    public class DoubleBox : ValueBox
+    public class DoubleBox : SettableValueBox
     {
         public override string Name { get { return "Double"; } }
 
@@ -181,50 +237,87 @@ namespace VLSEdit
             return new DoubleBox((DoubleValue)Value);
         }
 
-        public override void Serialise(StringWriter writer)
-        {
-            base.Serialise(writer);
-
-            writer.WriteLine(Value.StringRepresentation);
-        }
-
         public override void Deserialise(StringReader reader)
         {
             SetValue(new DoubleValue(0).NewFromString(reader.ReadLine()!));
         }
     }
 
-    public class NullBox : Box
+    public class StringBox : SettableValueBox
     {
-        private ServerNode _valueNode;
+        public override string Name { get { return "String"; } }
+
+        public StringBox(StringValue value)
+        {
+            SetValue(value);
+        }
+
+        public override StringBox Clone()
+        {
+            return new StringBox((StringValue)Value);
+        }
+
+        public override void Deserialise(StringReader reader)
+        {
+            SetValue(new StringValue(reader.ReadLine()!));
+        }
+    }
+
+    public class NullBox : ValueBox
+    {
 
         public override string Name { get { return "Null"; } }
 
-        public override List<Node> Nodes { get { return new List<Node> { _valueNode }; } }
-
-        public override Color Color { get { return Color.Cyan; } }
-
         public NullBox()
         {
-            _valueNode = new ServerNode("Null", this);
         }
 
         public override NullBox Clone()
         {
             return new NullBox();
         }
+    }
 
-        public override void Serialise(StringWriter writer)
-        {
-            base.Serialise(writer);
-        }
+    public abstract class BoolBox : ValueBox
+    {
+        public abstract bool Value { get; }
 
-        public override void Deserialise(StringReader reader)
+        public override Value Interpret(Value context, ServerNode node)
         {
+            return new BoolValue(Value);
         }
     }
 
-    public class AddBox : Box
+    public class TrueBox : BoolBox
+    {
+        public override string Name { get { return "True"; } }
+
+        public override bool Value { get { return true; } }
+
+        public override TrueBox Clone()
+        {
+            return new TrueBox();
+        }
+    }
+
+    public class FalseBox : BoolBox
+    {
+        public override string Name { get { return "False"; } }
+
+        public override bool Value { get { return false; } }
+
+        public override FalseBox Clone()
+        {
+            return new FalseBox();
+        }
+    }
+
+    public abstract class OperatorBox : Box
+    {
+        public override Color Color { get { return Color.DeepSkyBlue; } }
+    }
+
+    public abstract class BinaryOpBox : OperatorBox
     {
         private ClientNode _aNode;
 
@@ -232,18 +325,30 @@ namespace VLSEdit
 
         private ServerNode _resultNode;
 
-        public override string Name { get { return "Add"; } }
-
-        public override List<Node> Nodes { get { return new List<Node> { _aNode, _bNode, _resultNode }; } }
-
-        public override Color Color { get { return Color.DeepSkyBlue; } }
-
-        public AddBox()
+        protected BinaryOpBox(string resultName)
         {
             _aNode = new ClientNode("A");
             _bNode = new ClientNode("B");
 
-            _resultNode = new ServerNode("Sum", this);
+            _resultNode = new ServerNode(resultName, this);
+        }
+
+        public override List<Node> Nodes { get { return new List<Node> { _aNode, _bNode, _resultNode }; } }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return Operate((NumberValue)_aNode.InterpretTarget(context), (NumberValue)_bNode.InterpretTarget(context));
+        }
+
+        public abstract NumberValue Operate(NumberValue a, NumberValue b);
+    }
+
+    public class AddBox : BinaryOpBox
+    {
+        public override string Name { get { return "Add"; } }
+
+        public AddBox() : base("A + B")
+        {
         }
 
         public override AddBox Clone()
@@ -251,9 +356,199 @@ namespace VLSEdit
             return new AddBox();
         }
 
+        public override NumberValue Operate(NumberValue a, NumberValue b)
+        {
+            return a.Add(b);
+        }
+    }
+
+    public class MultiplyBox : BinaryOpBox
+    {
+        public override string Name { get { return "Multiply"; } }
+
+        public MultiplyBox() : base("A * B")
+        {
+        }
+
+        public override MultiplyBox Clone()
+        {
+            return new MultiplyBox();
+        }
+
+        public override NumberValue Operate(NumberValue a, NumberValue b)
+        {
+            return a.Multiply(b);
+        }
+    }
+
+    public class DivideBox : BinaryOpBox
+    {
+        public override string Name { get { return "Divide"; } }
+
+        public DivideBox() : base("A / B")
+        {
+        }
+
+        public override DivideBox Clone()
+        {
+            return new DivideBox();
+        }
+
+        public override NumberValue Operate(NumberValue a, NumberValue b)
+        {
+            return a.Divide(b);
+        }
+    }
+
+    public class SubtractBox : BinaryOpBox
+    {
+        public override string Name { get { return "Subtract"; } }
+
+        public SubtractBox() : base("A - B")
+        {
+        }
+
+        public override SubtractBox Clone()
+        {
+            return new SubtractBox();
+        }
+
+        public override NumberValue Operate(NumberValue a, NumberValue b)
+        {
+            return a.Add(b.Negative());
+        }
+    }
+
+    public class NegateBox : OperatorBox
+    {
+        private ClientNode _inputNode;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "Negate"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
+
+        public NegateBox()
+        {
+            _inputNode = new ClientNode("X");
+
+            _resultNode = new ServerNode("-X", this);
+        }
+
+        public override NegateBox Clone()
+        {
+            return new NegateBox();
+        }
+
         public override Value Interpret(Value context, ServerNode node)
         {
-            return ((NumberValue)_aNode.InterpretTarget(context)).Add((NumberValue)_bNode.InterpretTarget(context));
+            return ((NumberValue)_inputNode.InterpretTarget(context)).Negative();
+        }
+    }
+
+    public class ToNumberBox : OperatorBox
+    {
+        private ClientNode _inputNode;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "String To Number"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
+
+        public ToNumberBox()
+        {
+            _inputNode = new ClientNode("String");
+
+            _resultNode = new ServerNode("Number", this);
+        }
+
+        public override ToNumberBox Clone()
+        {
+            return new ToNumberBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            try
+            {
+                return new IntegerValue(0).NewFromString(((StringValue)_inputNode.InterpretTarget(context)).StringRepresentation);
+            }
+            catch
+            {
+                return new DoubleValue(0).NewFromString(((StringValue)_inputNode.InterpretTarget(context)).StringRepresentation);
+            }
+        }
+    }
+
+    public class EqualBox : OperatorBox
+    {
+        private ClientNode _aNode;
+
+        private ClientNode _bNode;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "Are Equal?"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _aNode, _bNode }; } }
+
+        public EqualBox()
+        {
+            _aNode = new ClientNode("A");
+            _bNode = new ClientNode("B");
+
+            _resultNode = new ServerNode("A == B", this);
+        }
+
+        public override EqualBox Clone()
+        {
+            return new EqualBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return new BoolValue(_aNode.InterpretTarget(context).IsEqualTo(_bNode.InterpretTarget(context)));
+        }
+    }
+
+    public class IfBox : OperatorBox
+    {
+        private ClientNode _trueNode;
+
+        private ClientNode _falseNode;
+
+        private ClientNode _conditionNode;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "If"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _conditionNode, _trueNode, _falseNode }; } }
+
+        public IfBox()
+        {
+            _trueNode = new ClientNode("If True");
+            _falseNode = new ClientNode("Else");
+            _conditionNode = new ClientNode("Condition");
+
+            _resultNode = new ServerNode("Result", this);
+        }
+
+        public override IfBox Clone()
+        {
+            return new IfBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            if (((BoolValue)_conditionNode.InterpretTarget(context)).Value)
+            {
+                return _trueNode.InterpretTarget(context);
+            }
+
+            return _falseNode.InterpretTarget(context);
         }
     }
 
@@ -307,7 +602,7 @@ namespace VLSEdit
 
         public PrintBox()
         {
-            _eventNode = new ServerNode("Event", this);
+            _eventNode = new ServerNode("Trigger", this);
 
             _outputNode = new ClientNode("Output");
         }
@@ -324,6 +619,101 @@ namespace VLSEdit
             Console.WriteLine(result.StringRepresentation);
 
             return result;
+        }
+    }
+
+    public class AskBox : ActionBox
+    {
+        private ServerNode _resultNode;
+
+        private ClientNode _questionNode;
+
+        public override string Name { get { return "Ask"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _questionNode }; } }
+
+        public AskBox()
+        {
+            _resultNode = new ServerNode("Answer", this);
+
+            _questionNode = new ClientNode("Question");
+        }
+
+        public override AskBox Clone()
+        {
+            return new AskBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            Value question = _questionNode.InterpretTarget(context);
+
+            Console.Write(question.StringRepresentation);
+
+            StringValue result = new StringValue(Console.ReadLine() ?? "");
+
+            return result;
+        }
+    }
+
+    public abstract class PatchBox : Box
+    {
+        public override Color Color { get { return Color.Yellow; } }
+    }
+
+    public class CallBox : PatchBox
+    {
+        private ServerNode _resultNode;
+
+        private ClientNode _calleeNode;
+
+        private ClientNode _inputNode;
+
+        public override string Name { get { return "Call"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _calleeNode, _inputNode }; } }
+
+        public CallBox()
+        {
+            _resultNode = new ServerNode("Result", this);
+
+            _calleeNode = new ClientNode("Target");
+
+            _inputNode = new ClientNode("Argument");
+        }
+
+        public override CallBox Clone()
+        {
+            return new CallBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return _calleeNode.InterpretTarget(_inputNode.InterpretTarget(context));
+        }
+    }
+
+    public class CallValueBox : PatchBox
+    {
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "Call Value"; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode }; } }
+
+        public CallValueBox()
+        {
+            _resultNode = new ServerNode("Call Value", this);
+        }
+
+        public override CallValueBox Clone()
+        {
+            return new CallValueBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return context;
         }
     }
 }

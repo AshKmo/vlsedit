@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace VLSEdit
 {
     public class Runner
@@ -23,9 +25,20 @@ namespace VLSEdit
         {
         }
 
-        public void OpenScript(string scriptPath)
+        public bool OpenScript(string scriptPath)
         {
-            _script = ScriptLoader.LoadScript(scriptPath);
+            try
+            {
+                _script = ScriptLoader.LoadScript(scriptPath);
+            }
+            catch
+            {
+                Console.WriteLine($"Script {scriptPath} could not be loaded");
+
+                return false;
+            }
+
+            return true;
         }
 
         public void Run()

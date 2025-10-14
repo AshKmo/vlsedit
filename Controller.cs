@@ -185,9 +185,9 @@ namespace VLSEdit
 
                     if (nodeWidget == null)
                     {
-                        if (topBoxWidget.Box is ValueBox && topBoxWidget.Box.Mutable)
+                        if (topBoxWidget.Box is SettableValueBox && topBoxWidget.Box.Mutable)
                         {
-                            ValueBox valueBox = (ValueBox)topBoxWidget.Box;
+                            SettableValueBox valueBox = (SettableValueBox)topBoxWidget.Box;
 
                             try
                             {

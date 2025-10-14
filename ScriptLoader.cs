@@ -12,7 +12,7 @@ namespace VLSEdit
             }
             catch
             {
-                return new Script();
+                throw new Exception($"script file {scriptPath} not found");
             }
 
             Script result = ParseScript(streamReader.ReadToEnd());

@@ -36,9 +36,10 @@ namespace VLSEdit
                     break;
                 case "run":
                     {
-                        Runner.Instance.OpenScript(args[1]);
-
-                        Runner.Instance.Run();
+                        if (Runner.Instance.OpenScript(args[1]))
+                        {
+                            Runner.Instance.Run();
+                        }
                     }
                     break;
                 default:

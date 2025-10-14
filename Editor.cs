@@ -43,10 +43,23 @@ namespace VLSEdit
         {
             AddInitialBox(new StartBox());
             AddInitialBox(new PrintBox());
+            AddInitialBox(new AskBox());
             AddInitialBox(new NullBox());
+            AddInitialBox(new TrueBox());
+            AddInitialBox(new FalseBox());
             AddInitialBox(new IntegerBox(new IntegerValue(0)));
             AddInitialBox(new DoubleBox(new DoubleValue(0)));
+            AddInitialBox(new StringBox(new StringValue("")));
             AddInitialBox(new AddBox());
+            AddInitialBox(new SubtractBox());
+            AddInitialBox(new MultiplyBox());
+            AddInitialBox(new DivideBox());
+            AddInitialBox(new NegateBox());
+            AddInitialBox(new EqualBox());
+            AddInitialBox(new ToNumberBox());
+            AddInitialBox(new IfBox());
+            AddInitialBox(new CallBox());
+            AddInitialBox(new CallValueBox());
 
             double newHeight = 20;
 
@@ -63,7 +76,14 @@ namespace VLSEdit
         {
             _scriptPath = scriptPath;
 
-            _script = ScriptLoader.LoadScript(scriptPath);
+            try
+            {
+                _script = ScriptLoader.LoadScript(scriptPath);
+            }
+            catch
+            {
+                _script = new Script();
+            }
         }
 
         public void Tick()

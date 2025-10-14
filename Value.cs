@@ -116,7 +116,7 @@ namespace VLSEdit
 
         public override bool IsEqualTo(Value x)
         {
-            return x is IntegerValue && _value == ((IntegerValue)x).Value;
+            return x is IntegerValue value && _value == value.Value;
         }
 
         public override IntegerValue NewFromString(string value)
@@ -206,7 +206,7 @@ namespace VLSEdit
 
         public BoolValue(bool value)
         {
-            _value = Value;
+            _value = value;
         }
 
         public BoolValue And(BoolValue x)
@@ -226,12 +226,34 @@ namespace VLSEdit
 
         public override bool IsEqualTo(Value x)
         {
-            return x is BoolValue && _value == ((BoolValue)x).Value;
+            return x is BoolValue value && _value == value.Value;
         }
 
         public override BoolValue NewFromString(string value)
         {
             return new BoolValue(bool.Parse(value));
+        }
+    }
+
+    public class StringValue : Value
+    {
+        private string _value;
+
+        public override string StringRepresentation { get { return _value; } }
+
+        public StringValue(string value)
+        {
+            _value = value;
+        }
+
+        public override bool IsEqualTo(Value x)
+        {
+            return x is StringValue && x.StringRepresentation == StringRepresentation;
+        }
+
+        public override StringValue NewFromString(string value)
+        {
+            return new StringValue(value);
         }
     }
 }

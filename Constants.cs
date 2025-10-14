@@ -16,7 +16,7 @@ namespace VLSEdit
 
         public static double NODE_HEIGHT = 20;
 
-        public static double NODE_WIDTH = 80;
+        public static double NODE_WIDTH = 90;
 
         public static Color BACKGROUND_COLOR = SplashKit.RGBColor(0.2, 0.2, 0.2);
 

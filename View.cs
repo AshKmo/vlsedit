@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Timers;
 using SplashKitSDK;
 
@@ -13,6 +14,8 @@ namespace VLSEdit
 
         private string? _alertText = "";
 
+        private Stopwatch frameRateStopwatch = new Stopwatch();
+
         private List<BoxWidget> _boxWidgets = new List<BoxWidget>();
 
         public double OffsetX { get { return _offsetX; } set { _offsetX = value; } }
@@ -27,6 +30,8 @@ namespace VLSEdit
 
             foreach (BoxWidget boxWidget in _boxWidgets)
             {
+                if (!BoxWidgetOnScreen(boxWidget)) continue;
+
                 boxWidget.Draw(_offsetX, _offsetY);
             }
 
@@ -42,6 +47,8 @@ namespace VLSEdit
 
                     foreach (BoxWidget boxWidgetB in _boxWidgets)
                     {
+                        if (!(BoxWidgetOnScreen(boxWidgetA) || BoxWidgetOnScreen(boxWidgetB))) continue;
+
                         foreach (NodeWidget nodeWidgetB in boxWidgetB.NodeWidgets)
                         {
                             if (nodeWidgetB.Node is not ServerNode) continue;
@@ -75,6 +82,13 @@ namespace VLSEdit
 
                 SplashKit.DrawLine(Constants.DRAG_LINE_COLOR, SplashKit.LineFrom(nodeDragState.StartMousePosition, nodeDragState.NewState()));
             }
+
+            if (frameRateStopwatch.ElapsedMilliseconds != 0)
+            {
+                SplashKit.DrawText((1000 / frameRateStopwatch.ElapsedMilliseconds).ToString(), Color.White, 10, 10);
+            }
+
+            frameRateStopwatch.Restart();
         }
 
         public void Alert(string text, int duration)
@@ -94,6 +108,16 @@ namespace VLSEdit
             _alertTimer.Enabled = true;
 
             _alertText = text;
+        }
+
+        private bool BoxWidgetOnScreen(BoxWidget boxWidget)
+        {
+            double screenX = boxWidget.X + OffsetX;
+            double screenY = boxWidget.Y + OffsetY;
+
+            return
+                (screenX + Constants.BOX_WIDTH >= 0 && screenX < Constants.WINDOW_WIDTH) &&
+                (screenY + boxWidget.Height >= 0 && screenY < Constants.WINDOW_HEIGHT);
         }
     }
 }
