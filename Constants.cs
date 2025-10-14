@@ -14,7 +14,7 @@ namespace VLSEdit
 
         public static double BOX_OUTLINE_WIDTH = 3;
 
-        public static double NODE_HEIGHT = 20;
+        public static double NODE_HEIGHT = 25;
 
         public static double NODE_WIDTH = 90;
 

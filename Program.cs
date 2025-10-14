@@ -16,11 +16,13 @@ namespace VLSEdit
             {
                 case "edit":
                     {
-                        Window window = new Window("VLSEdit", Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
+                        string scriptPath = args[1];
+
+                        Editor.Instance.OpenScript(scriptPath);
+
+                        Window window = new Window("VLSEdit: " + scriptPath, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
 
                         SplashKit.WindowSetIcon(window, SplashKit.LoadBitmap("icon", "icon.png"));
-
-                        Editor.Instance.OpenScript(args[1]);
 
                         while (!window.CloseRequested)
                         {

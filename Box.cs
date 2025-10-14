@@ -4,6 +4,32 @@ using SplashKitSDK;
 
 namespace VLSEdit
 {
+    public enum BoxType
+    {
+        Start,
+        Sequence,
+        State,
+        Call,
+        CallValue,
+        Null,
+        True,
+        False,
+        Integer,
+        Double,
+        String,
+        Negate,
+        ToNumber,
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+        Equal,
+        If,
+        Print,
+        Write,
+        Ask,
+    }
+
     public abstract class Box
     {
         private List<Node> _nodes = new List<Node>();
@@ -21,6 +47,8 @@ namespace VLSEdit
         public abstract Color Color { get; }
 
         public bool Mutable { get { return _mutable; } set { _mutable = value; } }
+
+        public abstract BoxType Type { get; }
 
         public double X
         {
@@ -52,7 +80,7 @@ namespace VLSEdit
 
         public virtual void Serialise(StringWriter writer)
         {
-            writer.WriteLine(Name);
+            writer.WriteLine(Type);
 
             writer.WriteLine(X);
             writer.WriteLine(Y);
@@ -60,69 +88,7 @@ namespace VLSEdit
 
         public static Box FromString(StringReader reader)
         {
-            Box? newBox = null;
-
-            string boxName = reader.ReadLine()!;
-
-            switch (boxName)
-            {
-                case "Null":
-                    newBox = new NullBox();
-                    break;
-                case "Add":
-                    newBox = new AddBox();
-                    break;
-                case "Program Start":
-                    newBox = new StartBox();
-                    break;
-                case "Print":
-                    newBox = new PrintBox();
-                    break;
-                case "Integer":
-                    newBox = new IntegerBox(new IntegerValue(0));
-                    break;
-                case "Double":
-                    newBox = new DoubleBox(new DoubleValue(0));
-                    break;
-                case "Subtract":
-                    newBox = new SubtractBox();
-                    break;
-                case "Multiply":
-                    newBox = new MultiplyBox();
-                    break;
-                case "Divide":
-                    newBox = new DivideBox();
-                    break;
-                case "Negate":
-                    newBox = new NegateBox();
-                    break;
-                case "If":
-                    newBox = new IfBox();
-                    break;
-                case "Call":
-                    newBox = new CallBox();
-                    break;
-                case "Ask":
-                    newBox = new AskBox();
-                    break;
-                case "Call Value":
-                    newBox = new CallValueBox();
-                    break;
-                case "Are Equal?":
-                    newBox = new EqualBox();
-                    break;
-                case "String":
-                    newBox = new StringBox(new StringValue(""));
-                    break;
-                case "String To Number":
-                    newBox = new ToNumberBox();
-                    break;
-            }
-
-            if (newBox == null)
-            {
-                throw new Exception("box not recognised: " + boxName);
-            }
+            Box newBox = Create(Enum.Parse<BoxType>(reader.ReadLine()!));
 
             newBox.X = Double.Parse(reader.ReadLine()!);
             newBox.Y = Double.Parse(reader.ReadLine()!);
@@ -139,6 +105,88 @@ namespace VLSEdit
         public virtual Value Interpret(Value context, ServerNode node)
         {
             return new NullValue();
+        }
+
+        public static Box Create(BoxType boxType)
+        {
+            Box? newBox = null;
+
+            switch (boxType)
+            {
+                case BoxType.Null:
+                    newBox = new NullBox();
+                    break;
+                case BoxType.Add:
+                    newBox = new AddBox();
+                    break;
+                case BoxType.Start:
+                    newBox = new StartBox();
+                    break;
+                case BoxType.Print:
+                    newBox = new PrintBox();
+                    break;
+                case BoxType.Integer:
+                    newBox = new IntegerBox(new IntegerValue(0));
+                    break;
+                case BoxType.Double:
+                    newBox = new DoubleBox(new DoubleValue(0));
+                    break;
+                case BoxType.Subtract:
+                    newBox = new SubtractBox();
+                    break;
+                case BoxType.Multiply:
+                    newBox = new MultiplyBox();
+                    break;
+                case BoxType.Divide:
+                    newBox = new DivideBox();
+                    break;
+                case BoxType.Negate:
+                    newBox = new NegateBox();
+                    break;
+                case BoxType.If:
+                    newBox = new IfBox();
+                    break;
+                case BoxType.Call:
+                    newBox = new CallBox();
+                    break;
+                case BoxType.Ask:
+                    newBox = new AskBox();
+                    break;
+                case BoxType.CallValue:
+                    newBox = new CallValueBox();
+                    break;
+                case BoxType.Equal:
+                    newBox = new EqualBox();
+                    break;
+                case BoxType.String:
+                    newBox = new StringBox(new StringValue(""));
+                    break;
+                case BoxType.ToNumber:
+                    newBox = new ToNumberBox();
+                    break;
+                case BoxType.State:
+                    newBox = new StateBox();
+                    break;
+                case BoxType.Sequence:
+                    newBox = new SequenceBox();
+                    break;
+                case BoxType.True:
+                    newBox = new TrueBox();
+                    break;
+                case BoxType.False:
+                    newBox = new FalseBox();
+                    break;
+                case BoxType.Write:
+                    newBox = new WriteBox();
+                    break;
+            }
+
+            if (newBox == null)
+            {
+                throw new Exception("box not recognised: " + boxType);
+            }
+
+            return newBox;
         }
     }
 
@@ -207,6 +255,8 @@ namespace VLSEdit
     {
         public override string Name { get { return "Integer"; } }
 
+        public override BoxType Type { get { return BoxType.Integer; } }
+
         public IntegerBox(IntegerValue value)
         {
             SetValue(value);
@@ -226,6 +276,8 @@ namespace VLSEdit
     public class DoubleBox : SettableValueBox
     {
         public override string Name { get { return "Double"; } }
+
+        public override BoxType Type { get { return BoxType.Double; } }
 
         public DoubleBox(DoubleValue value)
         {
@@ -247,6 +299,8 @@ namespace VLSEdit
     {
         public override string Name { get { return "String"; } }
 
+        public override BoxType Type { get { return BoxType.String; } }
+
         public StringBox(StringValue value)
         {
             SetValue(value);
@@ -265,8 +319,9 @@ namespace VLSEdit
 
     public class NullBox : ValueBox
     {
-
         public override string Name { get { return "Null"; } }
+
+        public override BoxType Type { get { return BoxType.Null; } }
 
         public NullBox()
         {
@@ -292,6 +347,8 @@ namespace VLSEdit
     {
         public override string Name { get { return "True"; } }
 
+        public override BoxType Type { get { return BoxType.True; } }
+
         public override bool Value { get { return true; } }
 
         public override TrueBox Clone()
@@ -303,6 +360,8 @@ namespace VLSEdit
     public class FalseBox : BoolBox
     {
         public override string Name { get { return "False"; } }
+        
+        public override BoxType Type { get { return BoxType.False; } }
 
         public override bool Value { get { return false; } }
 
@@ -347,6 +406,8 @@ namespace VLSEdit
     {
         public override string Name { get { return "Add"; } }
 
+        public override BoxType Type { get { return BoxType.Add; } }
+
         public AddBox() : base("A + B")
         {
         }
@@ -365,6 +426,8 @@ namespace VLSEdit
     public class MultiplyBox : BinaryOpBox
     {
         public override string Name { get { return "Multiply"; } }
+
+        public override BoxType Type { get { return BoxType.Multiply; } }
 
         public MultiplyBox() : base("A * B")
         {
@@ -385,6 +448,8 @@ namespace VLSEdit
     {
         public override string Name { get { return "Divide"; } }
 
+        public override BoxType Type { get { return BoxType.Divide; } }
+
         public DivideBox() : base("A / B")
         {
         }
@@ -403,6 +468,8 @@ namespace VLSEdit
     public class SubtractBox : BinaryOpBox
     {
         public override string Name { get { return "Subtract"; } }
+
+        public override BoxType Type { get { return BoxType.Subtract; } }
 
         public SubtractBox() : base("A - B")
         {
@@ -426,6 +493,8 @@ namespace VLSEdit
         private ServerNode _resultNode;
 
         public override string Name { get { return "Negate"; } }
+
+        public override BoxType Type { get { return BoxType.Negate; } }
 
         public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
 
@@ -454,6 +523,8 @@ namespace VLSEdit
         private ServerNode _resultNode;
 
         public override string Name { get { return "String To Number"; } }
+
+        public override BoxType Type { get { return BoxType.ToNumber; } }
 
         public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
 
@@ -492,6 +563,8 @@ namespace VLSEdit
 
         public override string Name { get { return "Are Equal?"; } }
 
+        public override BoxType Type { get { return BoxType.Equal; } }
+
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _aNode, _bNode }; } }
 
         public EqualBox()
@@ -524,6 +597,8 @@ namespace VLSEdit
         private ServerNode _resultNode;
 
         public override string Name { get { return "If"; } }
+
+        public override BoxType Type { get { return BoxType.If; } }
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _conditionNode, _trueNode, _falseNode }; } }
 
@@ -575,6 +650,8 @@ namespace VLSEdit
     {
         public override string Name { get { return "Program Start"; } }
 
+        public override BoxType Type { get { return BoxType.Start; } }
+
         public StartBox()
         {
         }
@@ -590,21 +667,41 @@ namespace VLSEdit
         public override Color Color { get { return SplashKit.RGBColor(255, 143, 143); } }
     }
 
-    public class PrintBox : ActionBox
+    public abstract class OutputBox : ActionBox
     {
         private ServerNode _eventNode;
 
         private ClientNode _outputNode;
 
+        public override List<Node> Nodes { get { return new List<Node> { _eventNode, _outputNode }; } }
+
+        public OutputBox()
+        {
+            _eventNode = new ServerNode("Value", this);
+
+            _outputNode = new ClientNode("Output");
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            Value result = _outputNode.InterpretTarget(context);
+
+            Output(result.StringRepresentation);
+
+            return result;
+        }
+
+        public abstract void Output(string output);
+    }
+
+    public class PrintBox : OutputBox
+    {
         public override string Name { get { return "Print"; } }
 
-        public override List<Node> Nodes { get { return new List<Node> { _eventNode, _outputNode }; } }
+        public override BoxType Type { get { return BoxType.Print; } }
 
         public PrintBox()
         {
-            _eventNode = new ServerNode("Trigger", this);
-
-            _outputNode = new ClientNode("Output");
         }
 
         public override PrintBox Clone()
@@ -612,13 +709,30 @@ namespace VLSEdit
             return new PrintBox();
         }
 
-        public override Value Interpret(Value context, ServerNode node)
+        public override void Output(string output)
         {
-            Value result = _outputNode.InterpretTarget(context);
+            Console.WriteLine(output);
+        }
+    }
 
-            Console.WriteLine(result.StringRepresentation);
+    public class WriteBox : OutputBox
+    {
+        public override string Name { get { return "Write"; } }
 
-            return result;
+        public override BoxType Type { get { return BoxType.Write; } }
+
+        public WriteBox()
+        {
+        }
+
+        public override WriteBox Clone()
+        {
+            return new WriteBox();
+        }
+
+        public override void Output(string output)
+        {
+            Console.Write(output);
         }
     }
 
@@ -629,6 +743,8 @@ namespace VLSEdit
         private ClientNode _questionNode;
 
         public override string Name { get { return "Ask"; } }
+
+        public override BoxType Type { get { return BoxType.Ask; } }
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _questionNode }; } }
 
@@ -671,6 +787,8 @@ namespace VLSEdit
 
         public override string Name { get { return "Call"; } }
 
+        public override BoxType Type { get { return BoxType.Call; } }
+
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _calleeNode, _inputNode }; } }
 
         public CallBox()
@@ -699,6 +817,8 @@ namespace VLSEdit
 
         public override string Name { get { return "Call Value"; } }
 
+        public override BoxType Type { get { return BoxType.CallValue; } }
+
         public override List<Node> Nodes { get { return new List<Node> { _resultNode }; } }
 
         public CallValueBox()
@@ -714,6 +834,78 @@ namespace VLSEdit
         public override Value Interpret(Value context, ServerNode node)
         {
             return context;
+        }
+    }
+
+    public class StateBox : PatchBox
+    {
+        private Value _state = new NullValue();
+
+        private ServerNode _setNode;
+
+        private ServerNode _getNode;
+
+        public override string Name { get { return "State"; } }
+
+        public override BoxType Type { get { return BoxType.State; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _setNode, _getNode }; } }
+
+        public StateBox()
+        {
+            _setNode = new ServerNode("Set", this);
+
+            _getNode = new ServerNode("Get", this);
+        }
+
+        public override StateBox Clone()
+        {
+            return new StateBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            if (node == _setNode)
+            {
+                return _state = context;
+            }
+
+            return _state;
+        }
+    }
+
+    public class SequenceBox : PatchBox
+    {
+        private ServerNode _triggerNode;
+
+        private ClientNode _firstAction;
+
+        private ClientNode _secondAction;
+
+        public override string Name { get { return "Sequence"; } }
+
+        public override BoxType Type { get { return BoxType.Sequence; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _triggerNode, _firstAction, _secondAction }; } }
+
+        public SequenceBox()
+        {
+            _triggerNode = new ServerNode("Value", this);
+
+            _firstAction = new ClientNode("Discard");
+            _secondAction = new ClientNode("Return");
+        }
+
+        public override SequenceBox Clone()
+        {
+            return new SequenceBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            _firstAction.InterpretTarget(context);
+
+            return _secondAction.InterpretTarget(context);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
 using SplashKitSDK;
 
 namespace VLSEdit
@@ -44,7 +45,7 @@ namespace VLSEdit
         {
             _box = box;
 
-            double clientNodeY = Constants.BOX_TITLE_HEIGHT + 15;
+            double clientNodeY = Constants.BOX_TITLE_HEIGHT + 20;
 
             double serverNodeY = clientNodeY;
 
@@ -68,7 +69,7 @@ namespace VLSEdit
                 }
             }
 
-            _height = Math.Max(clientNodeY, serverNodeY);
+            _height = Math.Max(clientNodeY, serverNodeY) - 5;
         }
 
         public override void Draw(double offsetX, double offsetY)

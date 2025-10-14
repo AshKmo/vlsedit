@@ -1,6 +1,4 @@
-using System.ComponentModel;
-using System.ComponentModel.Design;
-using System.Text.Encodings.Web;
+using SplashKitSDK;
 
 namespace VLSEdit
 {
@@ -41,33 +39,14 @@ namespace VLSEdit
 
         private Editor()
         {
-            AddInitialBox(new StartBox());
-            AddInitialBox(new PrintBox());
-            AddInitialBox(new AskBox());
-            AddInitialBox(new NullBox());
-            AddInitialBox(new TrueBox());
-            AddInitialBox(new FalseBox());
-            AddInitialBox(new IntegerBox(new IntegerValue(0)));
-            AddInitialBox(new DoubleBox(new DoubleValue(0)));
-            AddInitialBox(new StringBox(new StringValue("")));
-            AddInitialBox(new AddBox());
-            AddInitialBox(new SubtractBox());
-            AddInitialBox(new MultiplyBox());
-            AddInitialBox(new DivideBox());
-            AddInitialBox(new NegateBox());
-            AddInitialBox(new EqualBox());
-            AddInitialBox(new ToNumberBox());
-            AddInitialBox(new IfBox());
-            AddInitialBox(new CallBox());
-            AddInitialBox(new CallValueBox());
-
             double newHeight = 20;
 
-            foreach (BoxWidget boxWidget in _view.BoxWidgets)
+            foreach (BoxType boxType in Enum.GetValues<BoxType>())
             {
+                BoxWidget boxWidget = AddInitialBox(Box.Create(boxType));
                 boxWidget.X = 20;
                 boxWidget.Y = newHeight;
-                newHeight += boxWidget.Height + 15;
+                newHeight += boxWidget.Height + 12;
                 boxWidget.Box.Mutable = false;
             }
         }
@@ -93,9 +72,11 @@ namespace VLSEdit
             _view.Draw();
         }
 
-        private void AddInitialBox(Box box)
+        private BoxWidget AddInitialBox(Box box)
         {
-            _view.BoxWidgets.Add(new BoxWidget(box));
+            BoxWidget boxWidget = new BoxWidget(box);
+            _view.BoxWidgets.Add(boxWidget);
+            return boxWidget;
         }
 
         public void AddBox(Box box)

@@ -191,7 +191,12 @@ namespace VLSEdit
 
                             try
                             {
-                                valueBox.SetValue(valueBox.Value.NewFromString(GUIPrompt.Ask("Enter the new value for this box:")));
+                                string? result = GUIPrompt.Ask("Enter the new value for this box:");
+
+                                if (result != null)
+                                {
+                                    valueBox.SetValue(valueBox.Value.NewFromString(result));
+                                }
                             }
                             catch
                             {

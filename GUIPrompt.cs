@@ -4,7 +4,7 @@ namespace VLSEdit
 {
     static class GUIPrompt
     {
-        public static string Ask(string question)
+        public static string? Ask(string question)
         {
             Font font = SplashKit.LoadFont(Constants.FONT_NAME, Constants.FONT_PATH);
 
@@ -30,6 +30,8 @@ namespace VLSEdit
 
                 SplashKit.CurrentWindow().Refresh(Constants.FRAMERATE);
             }
+
+            if (SplashKit.TextEntryCancelled()) return null;
 
             return SplashKit.TextInput();
         }
