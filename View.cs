@@ -85,7 +85,7 @@ namespace VLSEdit
 
             if (frameRateStopwatch.ElapsedMilliseconds != 0)
             {
-                SplashKit.DrawText((1000 / frameRateStopwatch.ElapsedMilliseconds).ToString(), Color.White, 10, 10);
+                SplashKit.DrawText((1000 / frameRateStopwatch.ElapsedMilliseconds).ToString(), Color.LimeGreen, Constants.WINDOW_WIDTH - 30, 10);
             }
 
             frameRateStopwatch.Restart();
