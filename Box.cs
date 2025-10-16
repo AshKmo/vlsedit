@@ -11,23 +11,36 @@ namespace VLSEdit
         State,
         Call,
         CallValue,
-        Null,
-        True,
-        False,
-        Integer,
-        Double,
-        String,
-        Negate,
-        ToNumber,
-        Add,
-        Subtract,
-        Multiply,
-        Divide,
-        Equal,
         If,
         Print,
         Write,
         Ask,
+        Null,
+        True,
+        False,
+        And,
+        Or,
+        Not,
+        Integer,
+        Double,
+        String,
+        List,
+        Negate,
+        Length,
+        LT,
+        LTE,
+        ToNumber,
+        ToString,
+        Add,
+        Subtract,
+        Multiply,
+        Divide,
+        Concat,
+        Substring,
+        ListAdd,
+        ListCdr,
+        ListIndex,
+        Equal,
     }
 
     public abstract class Box
@@ -178,6 +191,45 @@ namespace VLSEdit
                     break;
                 case BoxType.Write:
                     newBox = new WriteBox();
+                    break;
+                case BoxType.ToString:
+                    newBox = new ToStringBox();
+                    break;
+                case BoxType.And:
+                    newBox = new AndBox();
+                    break;
+                case BoxType.Or:
+                    newBox = new OrBox();
+                    break;
+                case BoxType.Not:
+                    newBox = new NotBox();
+                    break;
+                case BoxType.LT:
+                    newBox = new LTBox();
+                    break;
+                case BoxType.LTE:
+                    newBox = new LTEBox();
+                    break;
+                case BoxType.Concat:
+                    newBox = new ConcatBox();
+                    break;
+                case BoxType.Substring:
+                    newBox = new SubstringBox();
+                    break;
+                case BoxType.List:
+                    newBox = new ListBox();
+                    break;
+                case BoxType.ListIndex:
+                    newBox = new ListIndexBox();
+                    break;
+                case BoxType.ListAdd:
+                    newBox = new ListAddBox();
+                    break;
+                case BoxType.ListCdr:
+                    newBox = new ListCdrBox();
+                    break;
+                case BoxType.Length:
+                    newBox = new LengthBox();
                     break;
             }
 
@@ -333,6 +385,27 @@ namespace VLSEdit
         }
     }
 
+    public class ListBox : ValueBox
+    {
+        public override string Name { get { return "Empty List"; } }
+
+        public override BoxType Type { get { return BoxType.List; } }
+
+        public ListBox()
+        {
+        }
+
+        public override ListBox Clone()
+        {
+            return new ListBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return new ListValue(new List<Value>());
+        }
+    }
+
     public abstract class BoolBox : ValueBox
     {
         public abstract bool Value { get; }
@@ -384,10 +457,10 @@ namespace VLSEdit
 
         private ServerNode _resultNode;
 
-        protected BinaryOpBox(string resultName)
+        protected BinaryOpBox(string resultName, string inputNameA = "A", string inputNameB = "B")
         {
-            _aNode = new ClientNode("A");
-            _bNode = new ClientNode("B");
+            _aNode = new ClientNode(inputNameA);
+            _bNode = new ClientNode(inputNameB);
 
             _resultNode = new ServerNode(resultName, this);
         }
@@ -396,13 +469,27 @@ namespace VLSEdit
 
         public override Value Interpret(Value context, ServerNode node)
         {
-            return Operate((NumberValue)_aNode.InterpretTarget(context), (NumberValue)_bNode.InterpretTarget(context));
+            return Operate((Value)_aNode.InterpretTarget(context), (Value)_bNode.InterpretTarget(context));
         }
 
-        public abstract NumberValue Operate(NumberValue a, NumberValue b);
+        public abstract Value Operate(Value a, Value b);
     }
 
-    public class AddBox : BinaryOpBox
+    public abstract class BinaryMathOpBox : BinaryOpBox
+    {
+        protected BinaryMathOpBox(string resultName) : base(resultName)
+        {
+        }
+
+        public override Value Operate(Value a, Value b)
+        {
+            return Operate((NumberValue)a, (NumberValue)b);
+        }
+
+        public abstract Value Operate(NumberValue a, NumberValue b);
+    }
+
+    public class AddBox : BinaryMathOpBox
     {
         public override string Name { get { return "Add"; } }
 
@@ -423,7 +510,194 @@ namespace VLSEdit
         }
     }
 
-    public class MultiplyBox : BinaryOpBox
+    public class ConcatBox : BinaryOpBox
+    {
+        public override string Name { get { return "Join Strings"; } }
+
+        public override BoxType Type { get { return BoxType.Concat; } }
+
+        public ConcatBox() : base("AB")
+        {
+        }
+
+        public override ConcatBox Clone()
+        {
+            return new ConcatBox();
+        }
+
+        public override StringValue Operate(Value a, Value b)
+        {
+            return ((StringValue)a).Concat((StringValue)b);
+        }
+    }
+
+    public class ListAddBox : BinaryOpBox
+    {
+        public override string Name { get { return "Add to List"; } }
+
+        public override BoxType Type { get { return BoxType.ListAdd; } }
+
+        public ListAddBox() : base("New list", "List", "Element")
+        {
+        }
+
+        public override ListAddBox Clone()
+        {
+            return new ListAddBox();
+        }
+
+        public override ListValue Operate(Value a, Value b)
+        {
+            if (a is NullValue)
+            {
+                a = new ListValue(new List<Value>());
+            }
+
+            return ((ListValue)a).Add(b);
+        }
+    }
+
+    public class ListIndexBox : BinaryOpBox
+    {
+        public override string Name { get { return "Index List"; } }
+
+        public override BoxType Type { get { return BoxType.ListIndex; } }
+
+        public ListIndexBox() : base("Element", "List", "Index")
+        {
+        }
+
+        public override ListIndexBox Clone()
+        {
+            return new ListIndexBox();
+        }
+
+        public override Value Operate(Value a, Value b)
+        {
+            return ((ListValue)a).Index((IntegerValue)b);
+        }
+    }
+
+    public class ListCdrBox : UnaryOpBox
+    {
+        public override string Name { get { return "CDR"; } }
+
+        public override BoxType Type { get { return BoxType.ListCdr; } }
+
+        public ListCdrBox() : base("CDR", "List")
+        {
+        }
+
+        public override ListCdrBox Clone()
+        {
+            return new ListCdrBox();
+        }
+
+        public override Value Operate(Value a)
+        {
+            return ((ListValue)a).Cdr();
+        }
+    }
+
+    public class LTBox : BinaryMathOpBox
+    {
+        public override string Name { get { return "Less Than"; } }
+
+        public override BoxType Type { get { return BoxType.LT; } }
+
+        public LTBox() : base("A < B")
+        {
+        }
+
+        public override LTBox Clone()
+        {
+            return new LTBox();
+        }
+
+        public override BoolValue Operate(NumberValue a, NumberValue b)
+        {
+            return new BoolValue(a.LessThan(b));
+        }
+    }
+
+    public class LTEBox : BinaryMathOpBox
+    {
+        public override string Name { get { return "Less Than or Equal"; } }
+
+        public override BoxType Type { get { return BoxType.LTE; } }
+
+        public LTEBox() : base("A <= B")
+        {
+        }
+
+        public override LTEBox Clone()
+        {
+            return new LTEBox();
+        }
+
+        public override BoolValue Operate(NumberValue a, NumberValue b)
+        {
+            return new BoolValue(a.LessThan(b) || a.IsEqualTo(b));
+        }
+    }
+
+    public abstract class LogicBox : BinaryOpBox
+    {
+        protected LogicBox(string resultName) : base(resultName)
+        {
+        }
+
+        public override Value Operate(Value a, Value b)
+        {
+            return Operate((BoolValue)a, (BoolValue)b);
+        }
+
+        public abstract BoolValue Operate(BoolValue a, BoolValue b);
+    }
+
+    public class AndBox : LogicBox
+    {
+        public override string Name { get { return "And"; } }
+
+        public override BoxType Type { get { return BoxType.And; } }
+
+        public AndBox() : base("A && B")
+        {
+        }
+
+        public override AndBox Clone()
+        {
+            return new AndBox();
+        }
+
+        public override BoolValue Operate(BoolValue a, BoolValue b)
+        {
+            return new BoolValue(a.Value && b.Value);
+        }
+    }
+
+    public class OrBox : LogicBox
+    {
+        public override string Name { get { return "Or"; } }
+
+        public override BoxType Type { get { return BoxType.Or; } }
+
+        public OrBox() : base("A || B")
+        {
+        }
+
+        public override OrBox Clone()
+        {
+            return new OrBox();
+        }
+
+        public override BoolValue Operate(BoolValue a, BoolValue b)
+        {
+            return new BoolValue(a.Value || b.Value);
+        }
+    }
+
+    public class MultiplyBox : BinaryMathOpBox
     {
         public override string Name { get { return "Multiply"; } }
 
@@ -444,7 +718,7 @@ namespace VLSEdit
         }
     }
 
-    public class DivideBox : BinaryOpBox
+    public class DivideBox : BinaryMathOpBox
     {
         public override string Name { get { return "Divide"; } }
 
@@ -465,7 +739,7 @@ namespace VLSEdit
         }
     }
 
-    public class SubtractBox : BinaryOpBox
+    public class SubtractBox : BinaryMathOpBox
     {
         public override string Name { get { return "Subtract"; } }
 
@@ -486,23 +760,37 @@ namespace VLSEdit
         }
     }
 
-    public class NegateBox : OperatorBox
+    public abstract class UnaryOpBox : OperatorBox
     {
         private ClientNode _inputNode;
 
         private ServerNode _resultNode;
 
+        public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
+
+        protected UnaryOpBox(string inputName, string outputName)
+        {
+            _inputNode = new ClientNode(inputName);
+
+            _resultNode = new ServerNode(outputName, this);
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return Operate(_inputNode.InterpretTarget(context));
+        }
+
+        public abstract Value Operate(Value x);
+    }
+
+    public class NegateBox : UnaryOpBox
+    {
         public override string Name { get { return "Negate"; } }
 
         public override BoxType Type { get { return BoxType.Negate; } }
 
-        public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
-
-        public NegateBox()
+        public NegateBox() : base("X", "-X")
         {
-            _inputNode = new ClientNode("X");
-
-            _resultNode = new ServerNode("-X", this);
         }
 
         public override NegateBox Clone()
@@ -510,29 +798,41 @@ namespace VLSEdit
             return new NegateBox();
         }
 
-        public override Value Interpret(Value context, ServerNode node)
+        public override Value Operate(Value x)
         {
-            return ((NumberValue)_inputNode.InterpretTarget(context)).Negative();
+            return ((NumberValue)x).Negative();
         }
     }
 
-    public class ToNumberBox : OperatorBox
+    public class LengthBox : UnaryOpBox
     {
-        private ClientNode _inputNode;
+        public override string Name { get { return "Length of"; } }
 
-        private ServerNode _resultNode;
+        public override BoxType Type { get { return BoxType.Length; } }
 
+        public LengthBox() : base("Any", "Length")
+        {
+        }
+
+        public override LengthBox Clone()
+        {
+            return new LengthBox();
+        }
+
+        public override IntegerValue Operate(Value x)
+        {
+            return new IntegerValue(x.Length);
+        }
+    }
+
+    public class ToNumberBox : UnaryOpBox
+    {
         public override string Name { get { return "String To Number"; } }
 
         public override BoxType Type { get { return BoxType.ToNumber; } }
 
-        public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
-
-        public ToNumberBox()
+        public ToNumberBox() : base("String", "Number")
         {
-            _inputNode = new ClientNode("String");
-
-            _resultNode = new ServerNode("Number", this);
         }
 
         public override ToNumberBox Clone()
@@ -540,16 +840,58 @@ namespace VLSEdit
             return new ToNumberBox();
         }
 
-        public override Value Interpret(Value context, ServerNode node)
+        public override Value Operate(Value x)
         {
             try
             {
-                return new IntegerValue(0).NewFromString(((StringValue)_inputNode.InterpretTarget(context)).StringRepresentation);
+                return new IntegerValue(0).NewFromString(x.StringRepresentation);
             }
             catch
             {
-                return new DoubleValue(0).NewFromString(((StringValue)_inputNode.InterpretTarget(context)).StringRepresentation);
+                return new DoubleValue(0).NewFromString(x.StringRepresentation);
             }
+        }
+    }
+
+    public class ToStringBox : UnaryOpBox
+    {
+        public override string Name { get { return "Any To String"; } }
+
+        public override BoxType Type { get { return BoxType.ToString; } }
+
+        public ToStringBox() : base("Any", "String")
+        {
+        }
+
+        public override ToStringBox Clone()
+        {
+            return new ToStringBox();
+        }
+
+        public override Value Operate(Value x)
+        {
+            return new StringValue(x.StringRepresentation);
+        }
+    }
+
+    public class NotBox : UnaryOpBox
+    {
+        public override string Name { get { return "Not"; } }
+
+        public override BoxType Type { get { return BoxType.Not; } }
+
+        public NotBox() : base("X", "!X")
+        {
+        }
+
+        public override NotBox Clone()
+        {
+            return new NotBox();
+        }
+
+        public override Value Operate(Value x)
+        {
+            return new BoolValue(!((BoolValue)x).Value);
         }
     }
 
@@ -583,6 +925,47 @@ namespace VLSEdit
         public override Value Interpret(Value context, ServerNode node)
         {
             return new BoolValue(_aNode.InterpretTarget(context).IsEqualTo(_bNode.InterpretTarget(context)));
+        }
+    }
+
+    public class SubstringBox : OperatorBox
+    {
+        private ClientNode _stringNode;
+
+        private ClientNode _startNode;
+
+        private ClientNode _lengthNode;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "Substring"; } }
+
+        public override BoxType Type { get { return BoxType.Substring; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _stringNode, _startNode, _lengthNode }; } }
+
+        public SubstringBox()
+        {
+            _stringNode = new ClientNode("String");
+            _startNode = new ClientNode("Start");
+            _lengthNode = new ClientNode("Length");
+
+            _resultNode = new ServerNode("Substring", this);
+        }
+
+        public override SubstringBox Clone()
+        {
+            return new SubstringBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            int start = ((IntegerValue)_startNode.InterpretTarget(context)).Value;
+            int length = ((IntegerValue)_lengthNode.InterpretTarget(context)).Value;
+
+            string str = ((StringValue)_stringNode.InterpretTarget(context)).StringRepresentation;
+
+            return new StringValue(str.Substring(start, length));
         }
     }
 
@@ -637,7 +1020,7 @@ namespace VLSEdit
 
         protected EventBox()
         {
-            _node = new ClientNode("");
+            _node = new ClientNode("Event");
         }
 
         public void Trigger(Value context)

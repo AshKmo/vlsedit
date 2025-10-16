@@ -41,13 +41,27 @@ namespace VLSEdit
         {
             double newHeight = 20;
 
+            int column = 0;
+
+            double biggestHeight = 0;
+
             foreach (BoxType boxType in Enum.GetValues<BoxType>())
             {
                 BoxWidget boxWidget = AddInitialBox(Box.Create(boxType));
-                boxWidget.X = 20;
+                boxWidget.X = 20 + column * (Constants.BOX_WIDTH + 20);
                 boxWidget.Y = newHeight;
-                newHeight += boxWidget.Height + 12;
                 boxWidget.Box.Mutable = false;
+
+                biggestHeight = Math.Max(biggestHeight, boxWidget.Height);
+
+                column++;
+
+                if (column == Constants.INITIAL_BOX_COLUMN_COUNT)
+                {
+                    newHeight += biggestHeight + 20;
+                    column = 0;
+                    biggestHeight = 0;
+                }
             }
         }
 

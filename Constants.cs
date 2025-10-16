@@ -18,6 +18,8 @@ namespace VLSEdit
 
         public static double NODE_WIDTH = 90;
 
+        public static int INITIAL_BOX_COLUMN_COUNT = 4;
+
         public static Color BACKGROUND_COLOR = SplashKit.RGBColor(0.2, 0.2, 0.2);
 
         public static Color DRAG_LINE_COLOR = Color.Red;

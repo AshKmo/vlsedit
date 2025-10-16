@@ -1,3 +1,5 @@
+using System.Security.Cryptography.X509Certificates;
+
 namespace VLSEdit
 {
     public abstract class Value
@@ -5,6 +7,8 @@ namespace VLSEdit
         public abstract string StringRepresentation { get; }
 
         public abstract bool IsEqualTo(Value x);
+
+        public virtual int Length { get { return 0; } }
 
         public virtual Value NewFromString(string value)
         {
@@ -35,6 +39,8 @@ namespace VLSEdit
         abstract public NumberValue Divide(NumberValue x);
 
         abstract public NumberValue Negative();
+
+        abstract public bool LessThan(NumberValue x);
 
         public static NumberValue FromNumber(int x)
         {
@@ -116,12 +122,25 @@ namespace VLSEdit
 
         public override bool IsEqualTo(Value x)
         {
-            return x is IntegerValue value && _value == value.Value;
+            return x is IntegerValue value && _value == value.Value || x is DoubleValue doubleValue && _value == doubleValue.Value;
         }
 
         public override IntegerValue NewFromString(string value)
         {
             return new IntegerValue(Int32.Parse(value));
+        }
+
+        public override bool LessThan(NumberValue x)
+        {
+            switch (x)
+            {
+                case IntegerValue xInt:
+                    return _value < xInt.Value;
+                case DoubleValue xDbl:
+                    return _value < xDbl.Value;
+            }
+
+            return false;
         }
     }
 
@@ -187,16 +206,29 @@ namespace VLSEdit
 
         public override bool IsEqualTo(Value x)
         {
-            return x is DoubleValue && _value == ((DoubleValue)x).Value;
+            return x is IntegerValue value && _value == value.Value || x is DoubleValue doubleValue && _value == doubleValue.Value;
         }
 
         public override DoubleValue NewFromString(string value)
         {
             return new DoubleValue(Double.Parse(value));
         }
+
+        public override bool LessThan(NumberValue x)
+        {
+            switch (x)
+            {
+                case IntegerValue xInt:
+                    return _value < xInt.Value;
+                case DoubleValue xDbl:
+                    return _value < xDbl.Value;
+            }
+
+            return false;
+        }
     }
 
-    class BoolValue : Value
+    public class BoolValue : Value
     {
         private bool _value;
 
@@ -241,6 +273,8 @@ namespace VLSEdit
 
         public override string StringRepresentation { get { return _value; } }
 
+        public override int Length { get { return _value.Length; } }
+
         public StringValue(string value)
         {
             _value = value;
@@ -254,6 +288,55 @@ namespace VLSEdit
         public override StringValue NewFromString(string value)
         {
             return new StringValue(value);
+        }
+
+        public StringValue Concat(StringValue x)
+        {
+            return new StringValue(_value + x.StringRepresentation);
+        }
+    }
+
+    public class ListValue : Value
+    {
+        private List<Value> _value;
+
+        public override int Length { get { return _value.Count; } }
+
+        public override string StringRepresentation { get { return "[" + String.Join(", ", _value.Select(v => v.StringRepresentation)) + "]"; } }
+
+        public ListValue(List<Value> value)
+        {
+            _value = value;
+        }
+
+        public override bool IsEqualTo(Value x)
+        {
+            return x is StringValue && x.StringRepresentation == StringRepresentation;
+        }
+
+        public override StringValue NewFromString(string value)
+        {
+            return new StringValue(value);
+        }
+
+        public ListValue Add(Value x)
+        {
+            return new ListValue([.. _value, x]);
+        }
+
+        public Value Index(IntegerValue x)
+        {
+            if (x.Value < 0 || x.Value >= _value.Count)
+            {
+                return new NullValue();
+            }
+
+            return _value[x.Value];
+        }
+
+        public ListValue Cdr()
+        {
+            return new ListValue(_value.Skip(1).ToList());
         }
     }
 }
