@@ -7,13 +7,13 @@ namespace VLSEdit
         public abstract void Execute();
     }
 
-    public class CloneCommand
+    public class CloneCommand : Command
     {
         public CloneCommand()
         {
         }
 
-        public void Execute()
+        public override void Execute()
         {
             if (Editor.Instance.SelectedBoxWidget == null) return;
 
@@ -26,13 +26,13 @@ namespace VLSEdit
         }
     }
 
-    public class SaveCommand
+    public class SaveCommand : Command
     {
         public SaveCommand()
         {
         }
 
-        public void Execute()
+        public override void Execute()
         {
             Editor.Instance.Save();
 

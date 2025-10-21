@@ -18,9 +18,17 @@ namespace VLSEdit
 
         public static double NODE_WIDTH = 90;
 
+        public static double TOOLBAR_HEIGHT = 35;
+
         public static int INITIAL_BOX_COLUMN_COUNT = 4;
 
         public static Color BACKGROUND_COLOR = SplashKit.RGBColor(0.2, 0.2, 0.2);
+
+        public static Color TOOLBAR_COLOR = Color.LightGray;
+
+        public static Color BUTTON_COLOR = SplashKit.RGBColor(0.6, 0.6, 0.6);
+
+        public static Color BUTTON_COLOR_CLICKING = Color.Plum;
 
         public static Color DRAG_LINE_COLOR = Color.Red;
 

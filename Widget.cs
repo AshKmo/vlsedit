@@ -154,4 +154,100 @@ namespace VLSEdit
             }
         }
     }
+
+    public class ToolbarWidget : Widget
+    {
+        private List<ButtonWidget> _buttons = new List<ButtonWidget>();
+
+        public List<ButtonWidget> Buttons { get { return _buttons; } }
+
+        public override double X { get { return 0; } }
+
+        public override double Y { get { return 0; } }
+
+        public ToolbarWidget()
+        {
+        }
+
+        public override void Draw(double offsetX, double offsetY)
+        {
+            SplashKit.FillRectangle(Constants.TOOLBAR_COLOR, 0, 0, Constants.WINDOW_WIDTH, Constants.TOOLBAR_HEIGHT);
+
+            foreach (ButtonWidget buttonWidget in _buttons)
+            {
+                buttonWidget.Draw(offsetX, offsetY);
+            }
+        }
+
+        public override bool PointWithin(double offsetX, double offsetY, Point2D point)
+        {
+            return point.Y <= Constants.TOOLBAR_HEIGHT;
+        }
+
+        public void AddButton(ButtonWidget button)
+        {
+            _buttons.Add(button);
+        }
+    }
+
+    public class ButtonWidget : Widget
+    {
+        private Command _clickAction;
+
+        private double _width;
+
+        private double _height;
+
+        private string _text;
+
+        private bool _clicking;
+
+        private Bitmap _icon;
+
+        public bool Clicking { set { _clicking = value; } }
+
+        public Command ClickAction { get { return _clickAction; } }
+
+        public ButtonWidget(double x, double y, double width, double height, Bitmap icon, string text, Command clickAction)
+        {
+            _icon = icon;
+
+            X = x;
+            Y = y;
+
+            _width = width;
+            _height = height;
+
+            _text = text;
+
+            _clickAction = clickAction;
+        }
+
+        public override void Draw(double offsetX, double offsetY)
+        {
+            double screenX = X + offsetX;
+            double screenY = Y + offsetY;
+
+            Color color = Constants.BUTTON_COLOR;
+
+            if (_clicking)
+            {
+                color = Constants.BUTTON_COLOR_CLICKING;
+            }
+
+            SplashKit.FillRectangle(color, X + offsetX, Y + offsetY, _width, _height);
+
+            SplashKit.DrawBitmap(_icon, screenX + 5, screenY + (_height - _icon.Height) / 2);
+
+            SplashKit.DrawText(_text, Color.Black, Constants.FONT_PATH, 14, screenX + _icon.Width + 10, screenY + 5);
+        }
+
+        public override bool PointWithin(double offsetX, double offsetY, Point2D point)
+        {
+            double screenX = offsetX + X;
+            double screenY = offsetY + Y;
+
+            return point.X >= screenX && point.X <= screenX + _width && point.Y >= screenY && point.Y <= screenY + _height;
+        }
+    }
 }

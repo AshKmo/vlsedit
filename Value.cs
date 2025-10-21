@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
 
 namespace VLSEdit
@@ -141,6 +142,11 @@ namespace VLSEdit
             }
 
             return false;
+        }
+
+        public IntegerValue Remainder(IntegerValue x)
+        {
+            return new IntegerValue(_value % x.Value);
         }
     }
 
@@ -302,6 +308,8 @@ namespace VLSEdit
 
         public override int Length { get { return _value.Count; } }
 
+        public List<Value> Value { get { return _value; } }
+
         public override string StringRepresentation { get { return "[" + String.Join(", ", _value.Select(v => v.StringRepresentation)) + "]"; } }
 
         public ListValue(List<Value> value)
@@ -311,7 +319,16 @@ namespace VLSEdit
 
         public override bool IsEqualTo(Value x)
         {
-            return x is StringValue && x.StringRepresentation == StringRepresentation;
+            if (x is not ListValue listValue) return false;
+
+            if (listValue.Length != Length) return false;
+
+            for (int i = 0; i < Length; i++)
+            {
+                if (!_value[i].IsEqualTo(listValue.Value[i])) return false;
+            }
+
+            return true;
         }
 
         public override StringValue NewFromString(string value)

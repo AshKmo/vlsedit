@@ -18,11 +18,24 @@ namespace VLSEdit
 
         private List<BoxWidget> _boxWidgets = new List<BoxWidget>();
 
+        private ToolbarWidget _toolbarWidget = new ToolbarWidget();
+
+        private long _lastFrameTime = 0;
+
         public double OffsetX { get { return _offsetX; } set { _offsetX = value; } }
 
         public double OffsetY { get { return _offsetY; } set { _offsetY = value; } }
 
         public List<BoxWidget> BoxWidgets { get { return _boxWidgets; } }
+
+        public ToolbarWidget Toolbar { get { return _toolbarWidget; } }
+
+        public KVMView()
+        {
+            double height = Constants.TOOLBAR_HEIGHT - 10;
+
+            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
+        }
 
         public void Draw()
         {
@@ -83,10 +96,14 @@ namespace VLSEdit
                 SplashKit.DrawLine(Constants.DRAG_LINE_COLOR, SplashKit.LineFrom(nodeDragState.StartMousePosition, nodeDragState.NewState()));
             }
 
-            if (frameRateStopwatch.ElapsedMilliseconds != 0)
+            _toolbarWidget.Draw(0, 0);
+
+            if (_lastFrameTime != 0)
             {
-                SplashKit.DrawText((1000 / frameRateStopwatch.ElapsedMilliseconds).ToString(), Color.LimeGreen, Constants.WINDOW_WIDTH - 30, 10);
+                SplashKit.DrawText("FPS: " + (1000 / _lastFrameTime).ToString(), Color.Black, Constants.WINDOW_WIDTH - 65, 10);
             }
+
+            _lastFrameTime = frameRateStopwatch.ElapsedMilliseconds;
 
             frameRateStopwatch.Restart();
         }

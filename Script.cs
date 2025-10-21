@@ -43,7 +43,7 @@ namespace VLSEdit
             {
                 Box newBox = Box.FromString(reader);
 
-                Editor.Instance.AddBox(newBox);
+                Editor.Instance.View.BoxWidgets.Add(new BoxWidget(newBox));
 
                 _boxes.Add(newBox);
             }

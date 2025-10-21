@@ -83,6 +83,18 @@ namespace VLSEdit
         }
     }
 
+    public class KVMControllerDragStateButton : KVMControllerDragState
+    {
+        private ButtonWidget _selectedWidget;
+
+        public ButtonWidget SelectedWidget { get { return _selectedWidget; } }
+
+        public KVMControllerDragStateButton(ButtonWidget widget) : base(new Point2D())
+        {
+            _selectedWidget = widget;
+        }
+    }
+
     public class KVMController
     {
         private KVMControllerDragState _dragState = new KVMControllerDragStateNone();
@@ -100,24 +112,40 @@ namespace VLSEdit
                 switch (_dragState)
                 {
                     case KVMControllerDragStateNone:
-                        foreach (BoxWidget boxWidget in Editor.Instance.View.BoxWidgets)
-                        {
-                            Editor.Instance.SelectedBoxWidget = null;
+                        ButtonWidget? _buttonWidget = FindButtonWidget();
 
-                            boxWidget.Selected = false;
+                        if (_buttonWidget != null) {
+                            _dragState = new KVMControllerDragStateButton(_buttonWidget);
 
-                            if (MouseWithinBoxWidget(boxWidget))
+                            foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
                             {
-                                _dragState = new KVMControllerDragStateBox(boxWidget);
+                                _buttonWidget.Clicking = false;
                             }
 
-                            if (boxWidget.Box.Mutable)
-                            {
-                                NodeWidget? nodeWidget = FindNodeWidget(boxWidget);
+                            _buttonWidget.Clicking = true;
+                        }
 
-                                if (nodeWidget != null)
+                        if (_dragState is KVMControllerDragStateNone)
+                        {
+                            foreach (BoxWidget boxWidget in Editor.Instance.View.BoxWidgets)
+                            {
+                                Editor.Instance.SelectedBoxWidget = null;
+
+                                boxWidget.Selected = false;
+
+                                if (MouseWithinBoxWidget(boxWidget))
                                 {
-                                    _dragState = new KVMControllerDragStateNode(nodeWidget);
+                                    _dragState = new KVMControllerDragStateBox(boxWidget);
+                                }
+
+                                if (boxWidget.Box.Mutable)
+                                {
+                                    NodeWidget? nodeWidget = FindNodeWidget(boxWidget);
+
+                                    if (nodeWidget != null)
+                                    {
+                                        _dragState = new KVMControllerDragStateNode(nodeWidget);
+                                    }
                                 }
                             }
                         }
@@ -137,6 +165,9 @@ namespace VLSEdit
                                 break;
                         }
 
+                        break;
+
+                    case KVMControllerDragStateButton:
                         break;
                 }
 
@@ -169,6 +200,22 @@ namespace VLSEdit
 
                         ((ClientNode)nodeA).To = (ServerNode)nodeB;
 
+                        break;
+
+                    case KVMControllerDragStateButton cdsb:
+                        {
+                            foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
+                            {
+                                buttonWidget.Clicking = false;
+                            }
+
+                            ButtonWidget? foundButtonWidget = FindButtonWidget();
+
+                            if (foundButtonWidget == cdsb.SelectedWidget)
+                            {
+                                cdsb.SelectedWidget.ClickAction.Execute();
+                            }
+                        }
                         break;
                 }
 
@@ -214,6 +261,13 @@ namespace VLSEdit
                         {
                             Editor.Instance.BreakLinksTo(nodeWidget.Node);
                         }
+                    }
+                }
+                else
+                {
+                    if (Editor.Instance.SelectedBoxWidget != null)
+                    {
+                        new CloneCommand().Execute();
                     }
                 }
             }
@@ -267,6 +321,19 @@ namespace VLSEdit
             foreach (NodeWidget nodeWidget in boxWidget.NodeWidgets)
             {
                 if (MouseWithinNodeWidget(boxWidget, nodeWidget)) return nodeWidget;
+            }
+
+            return null;
+        }
+
+        private ButtonWidget? FindButtonWidget()
+        {
+            foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
+            {
+                if (buttonWidget.PointWithin(0, 0, SplashKit.MousePosition()))
+                {
+                    return buttonWidget;
+                }
             }
 
             return null;

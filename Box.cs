@@ -18,13 +18,13 @@ namespace VLSEdit
         Null,
         True,
         False,
-        And,
-        Or,
-        Not,
         Integer,
         Double,
         String,
         List,
+        And,
+        Or,
+        Not,
         Negate,
         Length,
         LT,
@@ -35,12 +35,14 @@ namespace VLSEdit
         Subtract,
         Multiply,
         Divide,
+        Remainder,
         Concat,
         Substring,
         ListAdd,
         ListCdr,
         ListIndex,
         Equal,
+        TypesEqual,
     }
 
     public abstract class Box
@@ -153,6 +155,9 @@ namespace VLSEdit
                 case BoxType.Divide:
                     newBox = new DivideBox();
                     break;
+                case BoxType.Remainder:
+                    newBox = new RemainderBox();
+                    break;
                 case BoxType.Negate:
                     newBox = new NegateBox();
                     break;
@@ -230,6 +235,9 @@ namespace VLSEdit
                     break;
                 case BoxType.Length:
                     newBox = new LengthBox();
+                    break;
+                case BoxType.TypesEqual:
+                    newBox = new TypesEqualBox();
                     break;
             }
 
@@ -507,6 +515,27 @@ namespace VLSEdit
         public override NumberValue Operate(NumberValue a, NumberValue b)
         {
             return a.Add(b);
+        }
+    }
+
+    public class RemainderBox : BinaryMathOpBox
+    {
+        public override string Name { get { return "Remainder"; } }
+
+        public override BoxType Type { get { return BoxType.Remainder; } }
+
+        public RemainderBox() : base("A % B")
+        {
+        }
+
+        public override AddBox Clone()
+        {
+            return new AddBox();
+        }
+
+        public override NumberValue Operate(NumberValue a, NumberValue b)
+        {
+            return ((IntegerValue)a).Remainder((IntegerValue)b);
         }
     }
 
@@ -928,6 +957,39 @@ namespace VLSEdit
         }
     }
 
+    public class TypesEqualBox : OperatorBox
+    {
+        private ClientNode _aNode;
+
+        private ClientNode _bNode;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "Types Match?"; } }
+
+        public override BoxType Type { get { return BoxType.TypesEqual; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _aNode, _bNode }; } }
+
+        public TypesEqualBox()
+        {
+            _aNode = new ClientNode("A");
+            _bNode = new ClientNode("B");
+
+            _resultNode = new ServerNode("Result", this);
+        }
+
+        public override TypesEqualBox Clone()
+        {
+            return new TypesEqualBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return new BoolValue(_aNode.InterpretTarget(context).GetType() == _bNode.InterpretTarget(context).GetType());
+        }
+    }
+
     public class SubstringBox : OperatorBox
     {
         private ClientNode _stringNode;
@@ -969,7 +1031,12 @@ namespace VLSEdit
         }
     }
 
-    public class IfBox : OperatorBox
+    public abstract class BranchBox : Box
+    {
+        public override Color Color { get { return Color.Plum; } }
+    }
+
+    public class IfBox : BranchBox
     {
         private ClientNode _trueNode;
 
