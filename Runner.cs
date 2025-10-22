@@ -6,7 +6,7 @@ namespace VLSEdit
     {
         private static Runner? _instance = null;
 
-        private Script? _script = null;
+        private Script _script = new Script();
 
         public static Runner Instance
         {
@@ -20,6 +20,8 @@ namespace VLSEdit
                 return _instance;
             }
         }
+
+        public Script Script { get { return _script; } }
 
         private Runner()
         {
@@ -43,11 +45,6 @@ namespace VLSEdit
 
         public void Run()
         {
-            if (_script == null)
-            {
-                throw new Exception("no script has been loaded");
-            }
-
             foreach (Box box in _script.Boxes)
             {
                 if (box is not StartBox) continue;

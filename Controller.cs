@@ -112,17 +112,13 @@ namespace VLSEdit
                 switch (_dragState)
                 {
                     case KVMControllerDragStateNone:
-                        ButtonWidget? _buttonWidget = FindButtonWidget();
+                        ButtonWidget? toolbarButtonWidget = FindButtonWidget();
 
-                        if (_buttonWidget != null) {
-                            _dragState = new KVMControllerDragStateButton(_buttonWidget);
+                        if (toolbarButtonWidget != null)
+                        {
+                            _dragState = new KVMControllerDragStateButton(toolbarButtonWidget);
 
-                            foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
-                            {
-                                _buttonWidget.Clicking = false;
-                            }
-
-                            _buttonWidget.Clicking = true;
+                            toolbarButtonWidget.Clicking = true;
                         }
 
                         if (_dragState is KVMControllerDragStateNone)
@@ -147,6 +143,14 @@ namespace VLSEdit
                                         _dragState = new KVMControllerDragStateNode(nodeWidget);
                                     }
                                 }
+
+                                foreach (ButtonWidget buttonWidget in boxWidget.ButtonWidgets)
+                                {
+                                    if (buttonWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X, Editor.Instance.View.OffsetY + boxWidget.Y, SplashKit.MousePosition()))
+                                    {
+                                        _dragState = new KVMControllerDragStateButton(buttonWidget);
+                                    }
+                                }
                             }
                         }
 
@@ -162,6 +166,10 @@ namespace VLSEdit
 
                             case KVMControllerDragStateNone:
                                 _dragState = new KVMControllerDragStateView();
+                                break;
+
+                            case KVMControllerDragStateButton dsb:
+                                dsb.SelectedWidget.Clicking = true;
                                 break;
                         }
 
@@ -204,17 +212,9 @@ namespace VLSEdit
 
                     case KVMControllerDragStateButton cdsb:
                         {
-                            foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
-                            {
-                                buttonWidget.Clicking = false;
-                            }
+                            cdsb.SelectedWidget.Clicking = false;
 
-                            ButtonWidget? foundButtonWidget = FindButtonWidget();
-
-                            if (foundButtonWidget == cdsb.SelectedWidget)
-                            {
-                                cdsb.SelectedWidget.ClickAction.Execute();
-                            }
+                            cdsb.SelectedWidget.ClickAction.Execute();
                         }
                         break;
                 }
@@ -232,24 +232,7 @@ namespace VLSEdit
 
                     if (nodeWidget == null)
                     {
-                        if (topBoxWidget.Box is SettableValueBox && topBoxWidget.Box.Mutable)
-                        {
-                            SettableValueBox valueBox = (SettableValueBox)topBoxWidget.Box;
-
-                            try
-                            {
-                                string? result = GUIPrompt.Ask("Enter the new value for this box:");
-
-                                if (result != null)
-                                {
-                                    valueBox.SetValue(valueBox.Value.NewFromString(result));
-                                }
-                            }
-                            catch
-                            {
-                                Editor.Instance.View.Alert("Failed to parse input", 1500);
-                            }
-                        }
+                        new SetBoxValueCommand(topBoxWidget.Box).Execute();
                     }
                     else
                     {
@@ -267,7 +250,7 @@ namespace VLSEdit
                 {
                     if (Editor.Instance.SelectedBoxWidget != null)
                     {
-                        new CloneCommand().Execute();
+                        new CloneBoxCommand().Execute();
                     }
                 }
             }
@@ -276,13 +259,12 @@ namespace VLSEdit
             {
                 if (SplashKit.KeyTyped(KeyCode.CKey))
                 {
-                    new CloneCommand().Execute();
+                    new CloneBoxCommand().Execute();
                 }
 
                 if (SplashKit.KeyTyped(KeyCode.DeleteKey) || SplashKit.KeyTyped(KeyCode.BackspaceKey))
                 {
-                    Editor.Instance.RemoveBox(Editor.Instance.SelectedBoxWidget);
-                    Editor.Instance.SelectedBoxWidget = null;
+                    new DeleteBoxCommand(Editor.Instance.SelectedBoxWidget).Execute();
                 }
             }
 

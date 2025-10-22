@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using System.Reflection.Metadata.Ecma335;
+using System.Runtime.CompilerServices;
 using SplashKitSDK;
 
 namespace VLSEdit
@@ -7,10 +8,12 @@ namespace VLSEdit
     public enum BoxType
     {
         Start,
+        Subroutine,
         Sequence,
         State,
         Call,
         CallValue,
+        Invoke,
         If,
         Print,
         Write,
@@ -239,6 +242,12 @@ namespace VLSEdit
                 case BoxType.TypesEqual:
                     newBox = new TypesEqualBox();
                     break;
+                case BoxType.Subroutine:
+                    newBox = new SubroutineBox();
+                    break;
+                case BoxType.Invoke:
+                    newBox = new InvokeBox();
+                    break;
             }
 
             if (newBox == null)
@@ -273,7 +282,14 @@ namespace VLSEdit
         }
     }
 
-    public abstract class SettableValueBox : ValueBox
+    public interface IValueSettable
+    {
+        public Value Value { get; }
+
+        public void SetValue(Value value);
+    }
+
+    public abstract class SettableValueBox : ValueBox, IValueSettable
     {
         private Value _value;
 
@@ -329,7 +345,7 @@ namespace VLSEdit
 
         public override void Deserialise(StringReader reader)
         {
-            SetValue(new IntegerValue(0).NewFromString(reader.ReadLine()!));
+            SetValue(IntegerValue.SubFromString(reader.ReadLine()!));
         }
     }
 
@@ -351,7 +367,7 @@ namespace VLSEdit
 
         public override void Deserialise(StringReader reader)
         {
-            SetValue(new DoubleValue(0).NewFromString(reader.ReadLine()!));
+            SetValue(DoubleValue.SubFromString(reader.ReadLine()!));
         }
     }
 
@@ -873,11 +889,11 @@ namespace VLSEdit
         {
             try
             {
-                return new IntegerValue(0).NewFromString(x.StringRepresentation);
+                return IntegerValue.SubFromString(x.StringRepresentation);
             }
             catch
             {
-                return new DoubleValue(0).NewFromString(x.StringRepresentation);
+                return DoubleValue.SubFromString(x.StringRepresentation);
             }
         }
     }
@@ -1112,6 +1128,53 @@ namespace VLSEdit
         }
     }
 
+    public class SubroutineBox : EventBox, IValueSettable
+    {
+        private string _subName;
+
+        public override string Name { get { return "Portal"; } }
+
+        public override BoxType Type { get { return BoxType.Subroutine; } }
+
+        public Value Value { get { return new StringValue(_subName); } }
+
+        public SubroutineBox(string subName = "MyPortal")
+        {
+            _subName = subName;
+
+            SetValue(new StringValue(subName));
+        }
+
+        public override Box Clone()
+        {
+            return new SubroutineBox(_subName);
+        }
+
+        public void SetValue(Value value)
+        {
+            _subName = ((StringValue)value).StringRepresentation;
+
+            _node.Name = _subName;
+        }
+
+        public override Value Interpret(Value context, ServerNode? _)
+        {
+            return _node.InterpretTarget(context);
+        }
+
+        public override void Serialise(StringWriter writer)
+        {
+            base.Serialise(writer);
+
+            writer.WriteLine(_subName);
+        }
+
+        public override void Deserialise(StringReader reader)
+        {
+            SetValue(new StringValue(reader.ReadLine()!));
+        }
+    }
+
     public abstract class ActionBox : Box
     {
         public override Color Color { get { return SplashKit.RGBColor(255, 143, 143); } }
@@ -1132,7 +1195,7 @@ namespace VLSEdit
             _outputNode = new ClientNode("Output");
         }
 
-        public override Value Interpret(Value context, ServerNode node)
+        public override Value Interpret(Value context, ServerNode _)
         {
             Value result = _outputNode.InterpretTarget(context);
 
@@ -1284,6 +1347,67 @@ namespace VLSEdit
         public override Value Interpret(Value context, ServerNode node)
         {
             return context;
+        }
+    }
+
+    public class InvokeBox : PatchBox, IValueSettable
+    {
+        private string _subName;
+
+        private ServerNode _resultNode;
+
+        public override string Name { get { return "Send to Portal"; } }
+
+        public override BoxType Type { get { return BoxType.Invoke; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode }; } }
+
+        public Value Value { get { return new StringValue(_subName); } }
+
+        public InvokeBox(string subName = "MyPortal")
+        {
+            _subName = subName;
+
+            _resultNode = new ServerNode(_subName, this);
+
+            SetValue(new StringValue(subName));
+        }
+
+        public override InvokeBox Clone()
+        {
+            return new InvokeBox(_subName);
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            foreach (Box box in Runner.Instance.Script.Boxes)
+            {
+                if (box is SubroutineBox subBox && subBox.Value.StringRepresentation == Value.StringRepresentation)
+                {
+                    return subBox.Interpret(context, null);
+                }
+            }
+
+            throw new Exception($"cannot find portal '{_subName}'");
+        }
+
+        public void SetValue(Value value)
+        {
+            _subName = ((StringValue)value).StringRepresentation;
+
+            _resultNode.Name = _subName;
+        }
+
+        public override void Serialise(StringWriter writer)
+        {
+            base.Serialise(writer);
+
+            writer.WriteLine(_subName);
+        }
+
+        public override void Deserialise(StringReader reader)
+        {
+            SetValue(new StringValue(reader.ReadLine()!));
         }
     }
 

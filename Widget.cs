@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
 using System.Runtime.CompilerServices;
 using SplashKitSDK;
 
@@ -23,6 +24,8 @@ namespace VLSEdit
     {
         private List<NodeWidget> _nodeWidgets = new List<NodeWidget>();
 
+        private List<ButtonWidget> _buttonWidgets = new List<ButtonWidget>();
+
         private Box _box;
 
         private double _height;
@@ -40,6 +43,8 @@ namespace VLSEdit
         public Box Box { get { return _box; } }
 
         public List<NodeWidget> NodeWidgets { get { return _nodeWidgets; } }
+
+        public List<ButtonWidget> ButtonWidgets { get { return _buttonWidgets; } }
 
         public BoxWidget(Box box)
         {
@@ -67,6 +72,18 @@ namespace VLSEdit
                     newWidget.Y = serverNodeY;
                     serverNodeY += Constants.NODE_HEIGHT;
                 }
+
+                _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 20, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_CLONE_BITMAP, "", new CloneBoxCommand(_box)));
+
+                if (_box.Mutable)
+                {
+                    _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 40, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_DELETE_BITMAP, "", new DeleteBoxCommand(this)));
+                }
+
+                if (_box is IValueSettable && _box.Mutable)
+                {
+                    _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 60, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_SETVALUE_BITMAP, "", new SetBoxValueCommand(_box)));
+                }
             }
 
             _height = Math.Max(clientNodeY, serverNodeY) - 5;
@@ -93,6 +110,11 @@ namespace VLSEdit
             SplashKit.FillRectangle(_box.Color, screenX, screenY, Constants.BOX_WIDTH, Constants.BOX_TITLE_HEIGHT);
 
             SplashKit.DrawText(_box.Name, Color.Black, Constants.FONT_PATH, 16, screenX + 5, screenY + 3);
+
+            foreach (ButtonWidget buttonWidget in _buttonWidgets)
+            {
+                buttonWidget.Draw(screenX, screenY);
+            }
 
             foreach (NodeWidget nodeWidget in _nodeWidgets)
             {
@@ -204,11 +226,17 @@ namespace VLSEdit
 
         private Bitmap _icon;
 
+        private Color _color;
+
+        private Color _clickingColor;
+
+        private double _leftPad;
+
         public bool Clicking { set { _clicking = value; } }
 
         public Command ClickAction { get { return _clickAction; } }
 
-        public ButtonWidget(double x, double y, double width, double height, Bitmap icon, string text, Command clickAction)
+        public ButtonWidget(double x, double y, double width, double height, double leftPad, Color color, Color clickingColor, Bitmap icon, string text, Command clickAction)
         {
             _icon = icon;
 
@@ -221,6 +249,11 @@ namespace VLSEdit
             _text = text;
 
             _clickAction = clickAction;
+
+            _color = color;
+            _clickingColor = clickingColor;
+
+            _leftPad = leftPad;
         }
 
         public override void Draw(double offsetX, double offsetY)
@@ -228,16 +261,16 @@ namespace VLSEdit
             double screenX = X + offsetX;
             double screenY = Y + offsetY;
 
-            Color color = Constants.BUTTON_COLOR;
+            Color color = _color;
 
             if (_clicking)
             {
-                color = Constants.BUTTON_COLOR_CLICKING;
+                color = _clickingColor;
             }
 
             SplashKit.FillRectangle(color, X + offsetX, Y + offsetY, _width, _height);
 
-            SplashKit.DrawBitmap(_icon, screenX + 5, screenY + (_height - _icon.Height) / 2);
+            SplashKit.DrawBitmap(_icon, screenX + _leftPad, screenY + (_height - _icon.Height) / 2);
 
             SplashKit.DrawText(_text, Color.Black, Constants.FONT_PATH, 14, screenX + _icon.Width + 10, screenY + 5);
         }

@@ -11,8 +11,20 @@ namespace VLSEdit
 
         public virtual int Length { get { return 0; } }
 
-        public virtual Value NewFromString(string value)
+        public static Value FromString(Type type, string value)
         {
+            switch (type)
+            {
+                case Type t when t == typeof(StringValue):
+                    return new StringValue(value);
+                case Type t when t == typeof(IntegerValue):
+                    return IntegerValue.SubFromString(value);
+                case Type t when t == typeof(DoubleValue):
+                    return DoubleValue.SubFromString(value);
+                case Type t when t == typeof(BoolValue):
+                    return BoolValue.SubFromString(value);
+            }
+
             return new NullValue();
         }
     }
@@ -126,7 +138,7 @@ namespace VLSEdit
             return x is IntegerValue value && _value == value.Value || x is DoubleValue doubleValue && _value == doubleValue.Value;
         }
 
-        public override IntegerValue NewFromString(string value)
+        public static IntegerValue SubFromString(string value)
         {
             return new IntegerValue(Int32.Parse(value));
         }
@@ -215,7 +227,7 @@ namespace VLSEdit
             return x is IntegerValue value && _value == value.Value || x is DoubleValue doubleValue && _value == doubleValue.Value;
         }
 
-        public override DoubleValue NewFromString(string value)
+        public static DoubleValue SubFromString(string value)
         {
             return new DoubleValue(Double.Parse(value));
         }
@@ -267,7 +279,7 @@ namespace VLSEdit
             return x is BoolValue value && _value == value.Value;
         }
 
-        public override BoolValue NewFromString(string value)
+        public static BoolValue SubFromString(string value)
         {
             return new BoolValue(bool.Parse(value));
         }
@@ -291,7 +303,7 @@ namespace VLSEdit
             return x is StringValue && x.StringRepresentation == StringRepresentation;
         }
 
-        public override StringValue NewFromString(string value)
+        public static StringValue SubFromString(string value)
         {
             return new StringValue(value);
         }
@@ -329,11 +341,6 @@ namespace VLSEdit
             }
 
             return true;
-        }
-
-        public override StringValue NewFromString(string value)
-        {
-            return new StringValue(value);
         }
 
         public ListValue Add(Value x)

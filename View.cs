@@ -34,7 +34,7 @@ namespace VLSEdit
         {
             double height = Constants.TOOLBAR_HEIGHT - 10;
 
-            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
+            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
         }
 
         public void Draw()

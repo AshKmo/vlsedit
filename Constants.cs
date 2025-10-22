@@ -26,9 +26,9 @@ namespace VLSEdit
 
         public static Color TOOLBAR_COLOR = Color.LightGray;
 
-        public static Color BUTTON_COLOR = SplashKit.RGBColor(0.6, 0.6, 0.6);
+        public static Color TOOLBAR_BUTTON_COLOR = SplashKit.RGBColor(0.6, 0.6, 0.6);
 
-        public static Color BUTTON_COLOR_CLICKING = Color.Plum;
+        public static Color TOOLBAR_BUTTON_COLOR_CLICKING = Color.Plum;
 
         public static Color DRAG_LINE_COLOR = Color.Red;
 
@@ -38,10 +38,18 @@ namespace VLSEdit
 
         public static Color LINK_LINE_COLOR = Color.White;
 
+        public static Color TRANSPARENT_COLOR = SplashKit.RGBAColor(0, 0, 0, 0);
+
         public static string FONT_NAME = "Roboto";
 
         public static string FONT_PATH = "roboto.ttf";
 
         public static uint FRAMERATE = 60;
+
+        public static Bitmap BUTTON_DELETE_BITMAP = SplashKit.LoadBitmap("delete", "icons/delete.png");
+
+        public static Bitmap BUTTON_CLONE_BITMAP = SplashKit.LoadBitmap("clone", "icons/clone.png");
+
+        public static Bitmap BUTTON_SETVALUE_BITMAP = SplashKit.LoadBitmap("setvalue", "icons/setvalue.png");
     }
 }

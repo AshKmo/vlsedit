@@ -47,10 +47,12 @@ namespace VLSEdit
 
             foreach (BoxType boxType in Enum.GetValues<BoxType>())
             {
-                BoxWidget boxWidget = AddInitialBox(Box.Create(boxType));
-                boxWidget.X = 20 + column * (Constants.BOX_WIDTH + 20);
-                boxWidget.Y = newHeight;
-                boxWidget.Box.Mutable = false;
+                Box newBox = Box.Create(boxType);
+                newBox.X = 20 + column * (Constants.BOX_WIDTH + 20);
+                newBox.Y = newHeight;
+                newBox.Mutable = false;
+
+                BoxWidget boxWidget = AddInitialBox(newBox);
 
                 biggestHeight = Math.Max(biggestHeight, boxWidget.Height);
 
