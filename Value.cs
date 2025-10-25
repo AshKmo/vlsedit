@@ -362,5 +362,10 @@ namespace VLSEdit
         {
             return new ListValue(_value.Skip(1).ToList());
         }
+
+        public ListValue Concat(ListValue x)
+        {
+            return new ListValue(_value.Concat(x.Value).ToList());
+        }
     }
 }

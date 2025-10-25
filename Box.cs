@@ -10,6 +10,7 @@ namespace VLSEdit
         Start,
         Subroutine,
         Sequence,
+        While,
         State,
         Call,
         CallValue,
@@ -23,8 +24,11 @@ namespace VLSEdit
         False,
         Integer,
         Double,
+        Random,
         String,
         List,
+        Equal,
+        TypesEqual,
         And,
         Or,
         Not,
@@ -42,10 +46,9 @@ namespace VLSEdit
         Concat,
         Substring,
         ListAdd,
+        ListConcat,
         ListCdr,
         ListIndex,
-        Equal,
-        TypesEqual,
     }
 
     public abstract class Box
@@ -248,6 +251,15 @@ namespace VLSEdit
                 case BoxType.Invoke:
                     newBox = new InvokeBox();
                     break;
+                case BoxType.ListConcat:
+                    newBox = new ListConcatBox();
+                    break;
+                case BoxType.While:
+                    newBox = new WhileBox();
+                    break;
+                case BoxType.Random:
+                    newBox = new RandomBox();
+                    break;
             }
 
             if (newBox == null)
@@ -430,6 +442,23 @@ namespace VLSEdit
         }
     }
 
+    public class RandomBox : ValueBox
+    {
+        public override BoxType Type { get { return BoxType.Random; } }
+
+        public override string Name { get { return "Random"; } }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            return new DoubleValue(new Random().NextDouble());
+        }
+
+        public override RandomBox Clone()
+        {
+            return new RandomBox();
+        }
+    }
+
     public abstract class BoolBox : ValueBox
     {
         public abstract bool Value { get; }
@@ -544,9 +573,9 @@ namespace VLSEdit
         {
         }
 
-        public override AddBox Clone()
+        public override RemainderBox Clone()
         {
-            return new AddBox();
+            return new RemainderBox();
         }
 
         public override NumberValue Operate(NumberValue a, NumberValue b)
@@ -602,6 +631,27 @@ namespace VLSEdit
         }
     }
 
+    public class ListConcatBox : BinaryOpBox
+    {
+        public override string Name { get { return "Combine Lists"; } }
+
+        public override BoxType Type { get { return BoxType.ListConcat; } }
+
+        public ListConcatBox() : base("Combined", "List A", "List B")
+        {
+        }
+
+        public override ListConcatBox Clone()
+        {
+            return new ListConcatBox();
+        }
+
+        public override ListValue Operate(Value a, Value b)
+        {
+            return ((ListValue)a).Concat((ListValue)b);
+        }
+    }
+
     public class ListIndexBox : BinaryOpBox
     {
         public override string Name { get { return "Index List"; } }
@@ -619,6 +669,11 @@ namespace VLSEdit
 
         public override Value Operate(Value a, Value b)
         {
+            if (b is not IntegerValue || a is not ListValue)
+            {
+                return new NullValue();
+            }
+
             return ((ListValue)a).Index((IntegerValue)b);
         }
     }
@@ -629,7 +684,7 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ListCdr; } }
 
-        public ListCdrBox() : base("CDR", "List")
+        public ListCdrBox() : base("List", "CDR")
         {
         }
 
@@ -1347,6 +1402,47 @@ namespace VLSEdit
         public override Value Interpret(Value context, ServerNode node)
         {
             return context;
+        }
+    }
+
+    public class WhileBox : PatchBox
+    {
+        private ServerNode _resultNode;
+
+        private ClientNode _conditionNode;
+
+        private ClientNode _processNode;
+
+        public override string Name { get { return "While"; } }
+
+        public override BoxType Type { get { return BoxType.While; } }
+
+        public override List<Node> Nodes { get { return new List<Node> { _resultNode, _conditionNode, _processNode }; } }
+
+        public WhileBox()
+        {
+            _resultNode = new ServerNode("Last Value", this);
+
+            _conditionNode = new ClientNode("Condition");
+
+            _processNode = new ClientNode("Body");
+        }
+
+        public override WhileBox Clone()
+        {
+            return new WhileBox();
+        }
+
+        public override Value Interpret(Value context, ServerNode node)
+        {
+            Value result = new NullValue();
+
+            while (((BoolValue)_conditionNode.InterpretTarget(context)).Value)
+            {
+                result = _processNode.InterpretTarget(context);
+            }
+
+            return result;
         }
     }
 

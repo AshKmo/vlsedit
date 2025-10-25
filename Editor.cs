@@ -39,7 +39,7 @@ namespace VLSEdit
 
         private Editor()
         {
-            double newHeight = 20;
+            double newHeight = Constants.TOOLBAR_HEIGHT + 20;
 
             int column = 0;
 
