@@ -14,6 +14,8 @@ namespace VLSEdit
 
         private Script _script = new Script();
 
+        private UndoStateManager _undoStateManager = new UndoStateManager();
+
         private BoxWidget? _selectedBoxWidget;
 
         public BoxWidget? SelectedBoxWidget { get { return _selectedBoxWidget; } set { _selectedBoxWidget = value; } }
@@ -38,6 +40,11 @@ namespace VLSEdit
         }
 
         private Editor()
+        {
+            AddTemplateBoxes();
+        }
+
+        private void AddTemplateBoxes()
         {
             double newHeight = Constants.TOOLBAR_HEIGHT + 20;
 
@@ -79,6 +86,8 @@ namespace VLSEdit
             {
                 _script = new Script();
             }
+
+            RegisterChange();
         }
 
         public void Tick()
@@ -138,6 +147,37 @@ namespace VLSEdit
         public void Save()
         {
             ScriptLoader.SaveScript(_scriptPath!, _script);
+        }
+
+        public void RegisterChange()
+        {
+            _undoStateManager.Change(ScriptLoader.UnparseScript(_script));
+        }
+
+        public bool ChangeState(bool redo)
+        {
+            string? oldState;
+
+            if (redo)
+            {
+                oldState = _undoStateManager.Redo();
+            }
+            else
+            {
+                oldState = _undoStateManager.Undo();
+            }
+
+            if (oldState == null) return false;
+
+            _script = new Script();
+
+            _view.BoxWidgets = new List<BoxWidget>();
+
+            AddTemplateBoxes();
+
+            _script = ScriptLoader.ParseScript(oldState);
+
+            return true;
         }
     }
 }

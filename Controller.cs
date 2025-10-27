@@ -208,6 +208,8 @@ namespace VLSEdit
 
                         ((ClientNode)nodeA).To = (ServerNode)nodeB;
 
+                        Editor.Instance.RegisterChange();
+
                         break;
 
                     case KVMControllerDragStateButton cdsb:
@@ -215,6 +217,13 @@ namespace VLSEdit
                             cdsb.SelectedWidget.Clicking = false;
 
                             cdsb.SelectedWidget.ClickAction.Execute();
+                        }
+                        break;
+
+                    case KVMControllerDragStateBox:
+                        if (!_dragState.NewState().IsEqualTo(_dragState.InitialState))
+                        {
+                            Editor.Instance.RegisterChange();
                         }
                         break;
                 }
@@ -244,6 +253,8 @@ namespace VLSEdit
                         {
                             Editor.Instance.BreakLinksTo(nodeWidget.Node);
                         }
+
+                        Editor.Instance.RegisterChange();
                     }
                 }
                 else
@@ -268,9 +279,17 @@ namespace VLSEdit
                 }
             }
 
-            if (SplashKit.KeyTyped(KeyCode.SKey))
+            if (SplashKit.KeyDown(KeyCode.LeftCtrlKey) || SplashKit.KeyDown(KeyCode.RightCtrlKey))
             {
-                new SaveCommand().Execute();
+                if (SplashKit.KeyTyped(KeyCode.SKey))
+                {
+                    new SaveCommand().Execute();
+                }
+
+                if (SplashKit.KeyTyped(KeyCode.ZKey) || SplashKit.KeyTyped(KeyCode.YKey))
+                {
+                    new ChangeStateCommand(SplashKit.KeyTyped(KeyCode.YKey)).Execute();
+                }
             }
         }
 

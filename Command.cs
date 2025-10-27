@@ -1,4 +1,5 @@
 using SplashKitSDK;
+using VLSEdit;
 
 namespace VLSEdit
 {
@@ -37,6 +38,8 @@ namespace VLSEdit
             newBox.Y = SplashKit.MouseY() - Editor.Instance.View.OffsetY;
 
             Editor.Instance.AddBox(newBox);
+
+            Editor.Instance.RegisterChange();
         }
     }
 
@@ -67,6 +70,7 @@ namespace VLSEdit
         {
             Editor.Instance.RemoveBox(_boxWidget);
             Editor.Instance.SelectedBoxWidget = null;
+            Editor.Instance.RegisterChange();
         }
     }
 
@@ -90,6 +94,8 @@ namespace VLSEdit
                     if (result != null)
                     {
                         valueBox.SetValue(Value.FromString(valueBox.Value.GetType(), result));
+
+                        Editor.Instance.RegisterChange();
                     }
                 }
                 catch
@@ -98,5 +104,20 @@ namespace VLSEdit
                 }
             }
         }
+    }
+}
+
+public class ChangeStateCommand : Command
+{
+    private bool _redo;
+
+    public ChangeStateCommand(bool redo)
+    {
+        _redo = redo;
+    }
+
+    public override void Execute()
+    {
+        Editor.Instance.ChangeState(_redo);
     }
 }

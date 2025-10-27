@@ -26,7 +26,7 @@ namespace VLSEdit
 
         public double OffsetY { get { return _offsetY; } set { _offsetY = value; } }
 
-        public List<BoxWidget> BoxWidgets { get { return _boxWidgets; } }
+        public List<BoxWidget> BoxWidgets { get { return _boxWidgets; } set { _boxWidgets = value; } }
 
         public ToolbarWidget Toolbar { get { return _toolbarWidget; } }
 
@@ -35,6 +35,9 @@ namespace VLSEdit
             double height = Constants.TOOLBAR_HEIGHT - 10;
 
             _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
+
+            _toolbarWidget.AddButton(new ButtonWidget(75, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("undo", "icons/undo.png"), "Undo", new ChangeStateCommand(false)));
+            _toolbarWidget.AddButton(new ButtonWidget(145, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("redo", "icons/redo.png"), "Redo", new ChangeStateCommand(true)));
         }
 
         public void Draw()
