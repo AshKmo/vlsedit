@@ -36,6 +36,7 @@ namespace VLSEdit
                         window.Close();
                     }
                     break;
+
                 case "run":
                     {
                         if (Runner.Instance.OpenScript(args[1]))
@@ -44,6 +45,7 @@ namespace VLSEdit
                         }
                     }
                     break;
+
                 default:
                     Console.WriteLine("Sub-command must be either 'run' or 'edit'");
                     return;
