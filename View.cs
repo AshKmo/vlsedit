@@ -38,6 +38,8 @@ namespace VLSEdit
 
             _toolbarWidget.AddButton(new ButtonWidget(75, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("undo", "icons/undo.png"), "Undo", new ChangeStateCommand(false)));
             _toolbarWidget.AddButton(new ButtonWidget(145, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("redo", "icons/redo.png"), "Redo", new ChangeStateCommand(true)));
+
+            _toolbarWidget.AddButton(new ButtonWidget(215, 5, 100, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("autoclean", "icons/autoclean.png"), "Auto Clean", new AutoCleanCommand()));
         }
 
         public void Draw()

@@ -121,3 +121,87 @@ public class ChangeStateCommand : Command
         Editor.Instance.ChangeState(_redo);
     }
 }
+
+public class AutoCleanCommand : Command
+{
+    public AutoCleanCommand()
+    {
+    }
+
+    public override void Execute()
+    {
+        List<Box> boxList = new List<Box>();
+
+        foreach (Box box in Editor.Instance.Script.Boxes)
+        {
+            if (box is not EventBox) continue;
+
+            if (!box.Mutable) continue;
+
+            CollectUseful(boxList, box);
+        }
+
+        int count = 0;
+
+        for (int i = 0; i < Editor.Instance.View.BoxWidgets.Count; i++)
+        {
+            BoxWidget boxWidget = Editor.Instance.View.BoxWidgets[i];
+
+            if (!boxWidget.Box.Mutable) continue;
+
+            if (boxList.Contains(boxWidget.Box)) continue;
+
+            new DeleteBoxCommand(boxWidget).Execute();
+
+            i--;
+
+            count++;
+        }
+
+        string es = "es";
+
+        if (count == 1)
+        {
+            es = "";
+        }
+
+        Editor.Instance.View.Alert($"Removed {count} box{es}", 1500);
+    }
+
+    private void CollectUseful(List<Box> boxList, Box box)
+    {
+        if (boxList.Contains(box)) return;
+
+        boxList.Add(box);
+
+        if (box is InvokeBox invokeBox)
+        {
+            foreach (Box boxB in Editor.Instance.Script.Boxes)
+            {
+                if (boxB is SubroutineBox subBox && subBox.Value.StringRepresentation == invokeBox.Value.StringRepresentation)
+                {
+                    CollectUseful(boxList, boxB);
+                    break;
+                }
+            }
+        }
+
+        bool uselessEvent = box is EventBox;
+
+        foreach (Node node in box.Nodes)
+        {
+            if (node is not ClientNode clientNode) continue;
+
+            if (clientNode.To == null) continue;
+
+            CollectUseful(boxList, clientNode.To.Box);
+
+            uselessEvent = false;
+        }
+
+        if (uselessEvent)
+        {
+            boxList.Remove(box);
+        }
+    }
+}

@@ -268,11 +268,6 @@ namespace VLSEdit
 
             if (Editor.Instance.SelectedBoxWidget != null)
             {
-                if (SplashKit.KeyTyped(KeyCode.CKey))
-                {
-                    new CloneBoxCommand().Execute();
-                }
-
                 if (SplashKit.KeyTyped(KeyCode.DeleteKey) || SplashKit.KeyTyped(KeyCode.BackspaceKey))
                 {
                     new DeleteBoxCommand(Editor.Instance.SelectedBoxWidget).Execute();

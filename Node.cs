@@ -41,6 +41,8 @@ namespace VLSEdit
 
         public Guid ID { get { return _id; } }
 
+        public Box Box { get { return _box; } }
+
         public ServerNode(string name, Box box) : base(name)
         {
             _box = box;

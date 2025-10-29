@@ -10,12 +10,12 @@ namespace VLSEdit
         Start,
         Subroutine,
         Sequence,
-        While,
         State,
         Call,
         CallValue,
         Invoke,
         If,
+        While,
         Print,
         Write,
         Ask,
@@ -680,11 +680,11 @@ namespace VLSEdit
 
     public class ListCdrBox : UnaryOpBox
     {
-        public override string Name { get { return "CDR"; } }
+        public override string Name { get { return "List Tail"; } }
 
         public override BoxType Type { get { return BoxType.ListCdr; } }
 
-        public ListCdrBox() : base("List", "CDR")
+        public ListCdrBox() : base("List", "Tail")
         {
         }
 
@@ -1405,7 +1405,7 @@ namespace VLSEdit
         }
     }
 
-    public class WhileBox : PatchBox
+    public class WhileBox : BranchBox
     {
         private ServerNode _resultNode;
 
