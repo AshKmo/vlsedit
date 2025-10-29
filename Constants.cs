@@ -22,6 +22,8 @@ namespace VLSEdit
 
         public static int INITIAL_BOX_COLUMN_COUNT = 4;
 
+        public static double HIGH_DETAIL_SCALE = 0.5;
+
         public static Color BACKGROUND_COLOR = SplashKit.RGBColor(0.2, 0.2, 0.2);
 
         public static Color TOOLBAR_COLOR = Color.LightGray;

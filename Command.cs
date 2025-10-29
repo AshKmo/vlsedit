@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using SplashKitSDK;
 using VLSEdit;
 
@@ -34,8 +35,8 @@ namespace VLSEdit
 
             Box newBox = box.Clone();
 
-            newBox.X = SplashKit.MouseX() - Editor.Instance.View.OffsetX;
-            newBox.Y = SplashKit.MouseY() - Editor.Instance.View.OffsetY;
+            newBox.X = (SplashKit.MouseX() - Editor.Instance.View.OffsetX) / Editor.Instance.View.Scale;
+            newBox.Y = (SplashKit.MouseY() - Editor.Instance.View.OffsetY) / Editor.Instance.View.Scale;
 
             Editor.Instance.AddBox(newBox);
 
@@ -105,103 +106,139 @@ namespace VLSEdit
             }
         }
     }
-}
 
-public class ChangeStateCommand : Command
-{
-    private bool _redo;
-
-    public ChangeStateCommand(bool redo)
+    public class ChangeStateCommand : Command
     {
-        _redo = redo;
-    }
+        private bool _redo;
 
-    public override void Execute()
-    {
-        Editor.Instance.ChangeState(_redo);
-    }
-}
-
-public class AutoCleanCommand : Command
-{
-    public AutoCleanCommand()
-    {
-    }
-
-    public override void Execute()
-    {
-        List<Box> boxList = new List<Box>();
-
-        foreach (Box box in Editor.Instance.Script.Boxes)
+        public ChangeStateCommand(bool redo)
         {
-            if (box is not EventBox) continue;
-
-            if (!box.Mutable) continue;
-
-            CollectUseful(boxList, box);
+            _redo = redo;
         }
 
-        int count = 0;
-
-        for (int i = 0; i < Editor.Instance.View.BoxWidgets.Count; i++)
+        public override void Execute()
         {
-            BoxWidget boxWidget = Editor.Instance.View.BoxWidgets[i];
-
-            if (!boxWidget.Box.Mutable) continue;
-
-            if (boxList.Contains(boxWidget.Box)) continue;
-
-            new DeleteBoxCommand(boxWidget).Execute();
-
-            i--;
-
-            count++;
+            Editor.Instance.ChangeState(_redo);
         }
-
-        string es = "es";
-
-        if (count == 1)
-        {
-            es = "";
-        }
-
-        Editor.Instance.View.Alert($"Removed {count} box{es}", 1500);
     }
 
-    private void CollectUseful(List<Box> boxList, Box box)
+    public class AutoCleanCommand : Command
     {
-        if (boxList.Contains(box)) return;
-
-        boxList.Add(box);
-
-        if (box is InvokeBox invokeBox)
+        public AutoCleanCommand()
         {
-            foreach (Box boxB in Editor.Instance.Script.Boxes)
+        }
+
+        public override void Execute()
+        {
+            List<Box> boxList = new List<Box>();
+
+            foreach (Box box in Editor.Instance.Script.Boxes)
             {
-                if (boxB is SubroutineBox subBox && subBox.Value.StringRepresentation == invokeBox.Value.StringRepresentation)
+                if (box is not EventBox) continue;
+
+                if (!box.Mutable) continue;
+
+                CollectUseful(boxList, box);
+            }
+
+            int count = 0;
+
+            for (int i = 0; i < Editor.Instance.View.BoxWidgets.Count; i++)
+            {
+                BoxWidget boxWidget = Editor.Instance.View.BoxWidgets[i];
+
+                if (!boxWidget.Box.Mutable) continue;
+
+                if (boxList.Contains(boxWidget.Box)) continue;
+
+                new DeleteBoxCommand(boxWidget).Execute();
+
+                i--;
+
+                count++;
+            }
+
+            string es = "es";
+
+            if (count == 1)
+            {
+                es = "";
+            }
+
+            Editor.Instance.View.Alert($"Removed {count} box{es}", 1500);
+        }
+
+        private void CollectUseful(List<Box> boxList, Box box)
+        {
+            if (boxList.Contains(box)) return;
+
+            boxList.Add(box);
+
+            if (box is InvokeBox invokeBox)
+            {
+                foreach (Box boxB in Editor.Instance.Script.Boxes)
                 {
-                    CollectUseful(boxList, boxB);
-                    break;
+                    if (boxB is SubroutineBox subBox && subBox.Value.StringRepresentation == invokeBox.Value.StringRepresentation)
+                    {
+                        CollectUseful(boxList, boxB);
+                        break;
+                    }
                 }
             }
+
+            bool uselessEvent = box is EventBox;
+
+            foreach (Node node in box.Nodes)
+            {
+                if (node is not ClientNode clientNode) continue;
+
+                if (clientNode.To == null) continue;
+
+                CollectUseful(boxList, clientNode.To.Box);
+
+                uselessEvent = false;
+            }
+
+            if (uselessEvent)
+            {
+                boxList.Remove(box);
+            }
+        }
+    }
+
+    public class ScaleCommand : Command
+    {
+        private double _amount;
+
+        private bool _fromCentre;
+
+        public ScaleCommand(double amount, bool fromCentre = false)
+        {
+            _amount = amount;
+            _fromCentre = fromCentre;
         }
 
-        bool uselessEvent = box is EventBox;
-
-        foreach (Node node in box.Nodes)
+        public override void Execute()
         {
-            if (node is not ClientNode clientNode) continue;
+            if (_amount == 0 || (Editor.Instance.Controller.DragState is not KVMControllerDragStateNone && Editor.Instance.Controller.DragState is not KVMControllerDragStateButton)) return;
 
-            if (clientNode.To == null) continue;
+            double newScale = Math.Min(Editor.Instance.View.Scale / (1 - Editor.Instance.View.Scale * _amount * 0.4), 1);
 
-            CollectUseful(boxList, clientNode.To.Box);
+            if (newScale < 0 || newScale == double.NaN) return;
 
-            uselessEvent = false;
-        }
+            double originX = SplashKit.MouseX();
+            double originY = SplashKit.MouseY();
 
-        if (uselessEvent)
-        {
-            boxList.Remove(box);
+            if (_fromCentre)
+            {
+                originX = Constants.WINDOW_WIDTH / 2;
+                originY = Constants.WINDOW_HEIGHT / 2;
+            }
+
+            Editor.Instance.View.OffsetX += (originX - Editor.Instance.View.OffsetX) * (1 - newScale / Editor.Instance.View.Scale);
+            Editor.Instance.View.OffsetY += (originY - Editor.Instance.View.OffsetY) * (1 - newScale / Editor.Instance.View.Scale);
+
+            Editor.Instance.View.Scale = newScale;
         }
     }
 }

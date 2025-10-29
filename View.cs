@@ -10,6 +10,8 @@ namespace VLSEdit
 
         private double _offsetY;
 
+        private double _scale = 1;
+
         private System.Timers.Timer? _alertTimer = null;
 
         private string? _alertText = "";
@@ -30,16 +32,21 @@ namespace VLSEdit
 
         public ToolbarWidget Toolbar { get { return _toolbarWidget; } }
 
+        public double Scale { get { return _scale; } set { _scale = value; } }
+
         public KVMView()
         {
             double height = Constants.TOOLBAR_HEIGHT - 10;
 
-            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
+            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
 
-            _toolbarWidget.AddButton(new ButtonWidget(75, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("undo", "icons/undo.png"), "Undo", new ChangeStateCommand(false)));
-            _toolbarWidget.AddButton(new ButtonWidget(145, 5, 65, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("redo", "icons/redo.png"), "Redo", new ChangeStateCommand(true)));
+            _toolbarWidget.AddButton(new ButtonWidget(100, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("undo", "icons/undo.png"), "Undo", new ChangeStateCommand(false)));
+            _toolbarWidget.AddButton(new ButtonWidget(170, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("redo", "icons/redo.png"), "Redo", new ChangeStateCommand(true)));
 
-            _toolbarWidget.AddButton(new ButtonWidget(215, 5, 100, height, 5, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("autoclean", "icons/autoclean.png"), "Auto Clean", new AutoCleanCommand()));
+            _toolbarWidget.AddButton(new ButtonWidget(265, 5, 100, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("autoclean", "icons/autoclean.png"), "Auto Clean", new AutoCleanCommand()));
+
+            _toolbarWidget.AddButton(new ButtonWidget(395, 5, 95, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("zoomout", "icons/zoomout.png"), "Zoom Out", new ScaleCommand(-1, true)));
+            _toolbarWidget.AddButton(new ButtonWidget(495, 5, 85, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("zoomin", "icons/zoomin.png"), "Zoom In", new ScaleCommand(1, true)));
         }
 
         public void Draw()
@@ -50,7 +57,7 @@ namespace VLSEdit
             {
                 if (!BoxWidgetOnScreen(boxWidget)) continue;
 
-                boxWidget.Draw(_offsetX, _offsetY);
+                boxWidget.Draw(_offsetX, _offsetY, _scale);
             }
 
             foreach (BoxWidget boxWidgetA in _boxWidgets)
@@ -75,10 +82,10 @@ namespace VLSEdit
 
                             SplashKit.DrawLine(
                                 Constants.LINK_LINE_COLOR,
-                                nodeWidgetA.X + boxWidgetA.X + Editor.Instance.View.OffsetX,
-                                nodeWidgetA.Y + boxWidgetA.Y + Editor.Instance.View.OffsetY,
-                                nodeWidgetB.X + boxWidgetB.X + Editor.Instance.View.OffsetX,
-                                nodeWidgetB.Y + boxWidgetB.Y + Editor.Instance.View.OffsetY
+                                (nodeWidgetA.X + boxWidgetA.X) * Editor.Instance.View.Scale + Editor.Instance.View.OffsetX,
+                                (nodeWidgetA.Y + boxWidgetA.Y) * Editor.Instance.View.Scale + Editor.Instance.View.OffsetY,
+                                (nodeWidgetB.X + boxWidgetB.X) * Editor.Instance.View.Scale + Editor.Instance.View.OffsetX,
+                                (nodeWidgetB.Y + boxWidgetB.Y) * Editor.Instance.View.Scale + Editor.Instance.View.OffsetY
                             );
 
                             goto FoundServerNode;
@@ -98,10 +105,10 @@ namespace VLSEdit
             {
                 KVMControllerDragStateNode nodeDragState = (KVMControllerDragStateNode)Editor.Instance.Controller.DragState;
 
-                SplashKit.DrawLine(Constants.DRAG_LINE_COLOR, SplashKit.LineFrom(nodeDragState.StartMousePosition, nodeDragState.NewState()));
+                SplashKit.DrawLine(Constants.DRAG_LINE_COLOR, SplashKit.LineFrom(nodeDragState.StartMousePosition, nodeDragState.NewState(true)));
             }
 
-            _toolbarWidget.Draw(0, 0);
+            _toolbarWidget.Draw(0, 0, 1);
 
             if (_lastFrameTime != 0)
             {
@@ -134,8 +141,8 @@ namespace VLSEdit
 
         private bool BoxWidgetOnScreen(BoxWidget boxWidget)
         {
-            double screenX = boxWidget.X + OffsetX;
-            double screenY = boxWidget.Y + OffsetY;
+            double screenX = OffsetX + boxWidget.X * _scale;
+            double screenY = OffsetY + boxWidget.Y * _scale;
 
             return
                 (screenX + Constants.BOX_WIDTH >= 0 && screenX < Constants.WINDOW_WIDTH) &&

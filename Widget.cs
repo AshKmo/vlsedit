@@ -15,9 +15,9 @@ namespace VLSEdit
 
         public virtual double Y { get { return _y; } set { _y = value; } }
 
-        public abstract void Draw(double offsetX, double offsetY);
+        public abstract void Draw(double offsetX, double offsetY, double scale);
 
-        public abstract bool PointWithin(double offsetX, double offsetY, Point2D point);
+        public abstract bool PointWithin(double offsetX, double offsetY, double scale, Point2D point);
     }
 
     public class BoxWidget : Widget
@@ -89,45 +89,48 @@ namespace VLSEdit
             _height = Math.Max(clientNodeY, serverNodeY) - 5;
         }
 
-        public override void Draw(double offsetX, double offsetY)
+        public override void Draw(double offsetX, double offsetY, double scale)
         {
-            double screenX = offsetX + X;
-            double screenY = offsetY + Y;
+            double screenX = offsetX + X * scale;
+            double screenY = offsetY + Y * scale;
 
             if (_selected)
             {
                 SplashKit.FillRectangle(
                     Constants.BOX_OUTLINE_COLOR,
-                    screenX - Constants.BOX_OUTLINE_WIDTH,
-                    screenY - Constants.BOX_OUTLINE_WIDTH,
-                    Constants.BOX_WIDTH + Constants.BOX_OUTLINE_WIDTH * 2,
-                    _height + Constants.BOX_OUTLINE_WIDTH * 2
+                    screenX - Constants.BOX_OUTLINE_WIDTH * scale,
+                    screenY - Constants.BOX_OUTLINE_WIDTH * scale,
+                    (Constants.BOX_WIDTH + Constants.BOX_OUTLINE_WIDTH * 2) * scale,
+                    (_height + Constants.BOX_OUTLINE_WIDTH * 2) * scale
                 );
             }
 
-            SplashKit.FillRectangle(Constants.BOX_BACKGROUND_COLOR, screenX, screenY, Constants.BOX_WIDTH, _height);
+            SplashKit.FillRectangle(Constants.BOX_BACKGROUND_COLOR, screenX, screenY, Constants.BOX_WIDTH * scale, _height * scale);
 
-            SplashKit.FillRectangle(_box.Color, screenX, screenY, Constants.BOX_WIDTH, Constants.BOX_TITLE_HEIGHT);
+            SplashKit.FillRectangle(_box.Color, screenX, screenY, Constants.BOX_WIDTH * scale, Constants.BOX_TITLE_HEIGHT * scale);
 
-            SplashKit.DrawText(_box.Name, Color.Black, Constants.FONT_PATH, 16, screenX + 5, screenY + 3);
+            if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
+            {
+                SplashKit.DrawText(_box.Name, Color.Black, Constants.FONT_PATH, (int)Math.Round(16 * scale), screenX + 5 * scale, screenY + 3 * scale);
+            }
 
             foreach (ButtonWidget buttonWidget in _buttonWidgets)
             {
-                buttonWidget.Draw(screenX, screenY);
+                buttonWidget.Draw(screenX, screenY, scale);
             }
 
             foreach (NodeWidget nodeWidget in _nodeWidgets)
             {
-                nodeWidget.Draw(screenX, screenY);
+                nodeWidget.Draw(screenX, screenY, scale);
             }
         }
 
-        public override bool PointWithin(double offsetX, double offsetY, Point2D point)
+        public override bool PointWithin(double offsetX, double offsetY, double scale, Point2D point)
         {
-            double screenX = offsetX + X;
-            double screenY = offsetY + Y;
+            double screenX = offsetX + X * scale;
+            double screenY = offsetY + Y * scale;
 
-            return point.X >= screenX && point.X <= screenX + Constants.BOX_WIDTH && point.Y >= screenY && point.Y <= screenY + _height;
+            return point.X >= screenX && point.X <= screenX + Constants.BOX_WIDTH * scale && point.Y >= screenY && point.Y <= screenY + _height * scale;
         }
     }
 
@@ -142,37 +145,43 @@ namespace VLSEdit
             _node = node;
         }
 
-        public override void Draw(double offsetX, double offsetY)
+        public override void Draw(double offsetX, double offsetY, double scale)
         {
-            double screenX = offsetX + X;
-            double screenY = offsetY + Y;
+            double screenX = offsetX + X * scale;
+            double screenY = offsetY + Y * scale;
 
             if (_node is ServerNode)
             {
-                SplashKit.FillCircle(Color.White, screenX, screenY, 7);
+                SplashKit.FillCircle(Color.White, screenX, screenY, 7 * scale);
 
-                SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_PATH, 14, screenX + 15, screenY - 8);
+                if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
+                {
+                    SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + 15 * scale, screenY - 8 * scale);
+                }
             }
             else
             {
-                SplashKit.FillRectangle(Color.White, screenX - 7, screenY - 7, 14, 14);
+                SplashKit.FillRectangle(Color.White, screenX - 7 * scale, screenY - 7 * scale, 14 * scale, 14 * scale);
 
-                SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_PATH, 14, screenX + 15 - Constants.NODE_WIDTH, screenY - 8);
+                if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
+                {
+                    SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + (15 - Constants.NODE_WIDTH) * scale, screenY - 8 * scale);
+                }
             }
         }
 
-        public override bool PointWithin(double offsetX, double offsetY, Point2D point)
+        public override bool PointWithin(double offsetX, double offsetY, double scale, Point2D point)
         {
-            double screenX = offsetX + X;
-            double screenY = offsetY + Y;
+            double screenX = offsetX + X * scale;
+            double screenY = offsetY + Y * scale;
 
             if (_node is ServerNode)
             {
-                return SplashKit.PointInCircle(point.X, point.Y, screenX, screenY, 7);
+                return SplashKit.PointInCircle(point.X, point.Y, screenX, screenY, 7 * scale);
             }
             else
             {
-                return SplashKit.PointInRectangle(point.X, point.Y, screenX - 7, screenY - 7, 14, 14);
+                return SplashKit.PointInRectangle(point.X, point.Y, screenX - 7 * scale, screenY - 7 * scale, 14 * scale, 14 * scale);
             }
         }
     }
@@ -191,17 +200,17 @@ namespace VLSEdit
         {
         }
 
-        public override void Draw(double offsetX, double offsetY)
+        public override void Draw(double offsetX, double offsetY, double scale)
         {
             SplashKit.FillRectangle(Constants.TOOLBAR_COLOR, 0, 0, Constants.WINDOW_WIDTH, Constants.TOOLBAR_HEIGHT);
 
             foreach (ButtonWidget buttonWidget in _buttons)
             {
-                buttonWidget.Draw(offsetX, offsetY);
+                buttonWidget.Draw(offsetX, offsetY, scale);
             }
         }
 
-        public override bool PointWithin(double offsetX, double offsetY, Point2D point)
+        public override bool PointWithin(double offsetX, double offsetY, double scale, Point2D point)
         {
             return point.Y <= Constants.TOOLBAR_HEIGHT;
         }
@@ -256,10 +265,10 @@ namespace VLSEdit
             _leftPad = leftPad;
         }
 
-        public override void Draw(double offsetX, double offsetY)
+        public override void Draw(double offsetX, double offsetY, double scale)
         {
-            double screenX = X + offsetX;
-            double screenY = Y + offsetY;
+            double screenX = offsetX + X * scale;
+            double screenY = offsetY + Y * scale;
 
             Color color = _color;
 
@@ -268,19 +277,23 @@ namespace VLSEdit
                 color = _clickingColor;
             }
 
-            SplashKit.FillRectangle(color, X + offsetX, Y + offsetY, _width, _height);
+            SplashKit.FillRectangle(color, screenX, screenY, _width * scale, _height * scale);
 
-            SplashKit.DrawBitmap(_icon, screenX + _leftPad, screenY + (_height - _icon.Height) / 2);
+            DrawingOptions bitmapOptions = SplashKit.OptionDefaults();
+            bitmapOptions.ScaleX = (float)scale;
+            bitmapOptions.ScaleY = (float)scale;
 
-            SplashKit.DrawText(_text, Color.Black, Constants.FONT_PATH, 14, screenX + _icon.Width + 10, screenY + 5);
+            SplashKit.DrawBitmap(_icon, screenX + _leftPad * scale - 1.5 / scale, screenY + (_height * scale - _icon.Height) / 2, bitmapOptions);
+
+            SplashKit.DrawText(_text, Color.Black, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + (_icon.Width + 10) * scale, screenY + 5 * scale);
         }
 
-        public override bool PointWithin(double offsetX, double offsetY, Point2D point)
+        public override bool PointWithin(double offsetX, double offsetY, double scale, Point2D point)
         {
-            double screenX = offsetX + X;
-            double screenY = offsetY + Y;
+            double screenX = offsetX + X * scale;
+            double screenY = offsetY + Y * scale;
 
-            return point.X >= screenX && point.X <= screenX + _width && point.Y >= screenY && point.Y <= screenY + _height;
+            return point.X >= screenX && point.X <= screenX + _width * scale && point.Y >= screenY && point.Y <= screenY + _height * scale;
         }
     }
 }

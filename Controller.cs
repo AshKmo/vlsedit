@@ -9,9 +9,9 @@ namespace VLSEdit
 
         private Point2D _startMousePosition;
 
-        public Point2D InitialState { get { return _initialState; } }
+        public Point2D InitialState { get { return _initialState; } set { _initialState = value; } }
 
-        public Point2D StartMousePosition { get { return _startMousePosition; } }
+        public Point2D StartMousePosition { get { return _startMousePosition; } set { _initialState = value; } }
 
         protected KVMControllerDragState(Point2D initialState)
         {
@@ -19,9 +19,16 @@ namespace VLSEdit
             _initialState = initialState;
         }
 
-        public Point2D NewState()
+        public Point2D NewState(bool skipScaling = false)
         {
-            return new Point2D() { X = _initialState.X + SplashKit.MouseX() - _startMousePosition.X, Y = _initialState.Y + SplashKit.MouseY() - _startMousePosition.Y };
+            double localScale = 1;
+
+            if (!skipScaling)
+            {
+                localScale = Editor.Instance.View.Scale;
+            }
+
+            return new Point2D() { X = _initialState.X + (SplashKit.MouseX() - _startMousePosition.X) / localScale, Y = _initialState.Y + (SplashKit.MouseY() - _startMousePosition.Y) / localScale };
         }
 
         public virtual void UpdateTarget()
@@ -76,7 +83,7 @@ namespace VLSEdit
 
         public override void UpdateTarget()
         {
-            Point2D newState = NewState();
+            Point2D newState = NewState(true);
 
             Editor.Instance.View.OffsetX = newState.X;
             Editor.Instance.View.OffsetY = newState.Y;
@@ -112,7 +119,7 @@ namespace VLSEdit
                 switch (_dragState)
                 {
                     case KVMControllerDragStateNone:
-                        ButtonWidget? toolbarButtonWidget = FindButtonWidget();
+                        ButtonWidget? toolbarButtonWidget = FindToolbarButtonWidget();
 
                         if (toolbarButtonWidget != null)
                         {
@@ -146,7 +153,7 @@ namespace VLSEdit
 
                                 foreach (ButtonWidget buttonWidget in boxWidget.ButtonWidgets)
                                 {
-                                    if (buttonWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X, Editor.Instance.View.OffsetY + boxWidget.Y, SplashKit.MousePosition()))
+                                    if (buttonWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X * Editor.Instance.View.Scale, Editor.Instance.View.OffsetY + boxWidget.Y * Editor.Instance.View.Scale, Editor.Instance.View.Scale, SplashKit.MousePosition()))
                                     {
                                         _dragState = new KVMControllerDragStateButton(buttonWidget);
                                     }
@@ -285,17 +292,34 @@ namespace VLSEdit
                 {
                     new ChangeStateCommand(SplashKit.KeyTyped(KeyCode.YKey)).Execute();
                 }
+
+                if (SplashKit.KeyTyped(KeyCode.EqualsKey) || SplashKit.KeyTyped(KeyCode.MinusKey))
+                {
+                    double amount = -1;
+
+                    if (SplashKit.KeyTyped(KeyCode.EqualsKey))
+                    {
+                        amount = 1;
+                    }
+
+                    new ScaleCommand(amount, true).Execute();
+                }
+            }
+
+            if (SplashKit.MouseWheelScroll().Y != 0)
+            {
+                new ScaleCommand(SplashKit.MouseWheelScroll().Y).Execute();
             }
         }
 
         private bool MouseWithinBoxWidget(BoxWidget widget)
         {
-            return widget.PointWithin(Editor.Instance.View.OffsetX, Editor.Instance.View.OffsetY, SplashKit.MousePosition());
+            return widget.PointWithin(Editor.Instance.View.OffsetX, Editor.Instance.View.OffsetY, Editor.Instance.View.Scale, SplashKit.MousePosition());
         }
 
         private bool MouseWithinNodeWidget(BoxWidget boxWidget, NodeWidget nodeWidget)
         {
-            return nodeWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X, Editor.Instance.View.OffsetY + boxWidget.Y, SplashKit.MousePosition());
+            return nodeWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X * Editor.Instance.View.Scale, Editor.Instance.View.OffsetY + boxWidget.Y * Editor.Instance.View.Scale, Editor.Instance.View.Scale, SplashKit.MousePosition());
         }
 
         private BoxWidget? FindTopBoxWidget()
@@ -322,11 +346,11 @@ namespace VLSEdit
             return null;
         }
 
-        private ButtonWidget? FindButtonWidget()
+        private ButtonWidget? FindToolbarButtonWidget()
         {
             foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
             {
-                if (buttonWidget.PointWithin(0, 0, SplashKit.MousePosition()))
+                if (buttonWidget.PointWithin(0, 0, 1, SplashKit.MousePosition()))
                 {
                     return buttonWidget;
                 }
