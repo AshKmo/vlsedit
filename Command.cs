@@ -174,18 +174,6 @@ namespace VLSEdit
 
             boxList.Add(box);
 
-            if (box is InvokeBox invokeBox)
-            {
-                foreach (Box boxB in Editor.Instance.Script.Boxes)
-                {
-                    if (boxB is SubroutineBox subBox && subBox.Value.StringRepresentation == invokeBox.Value.StringRepresentation)
-                    {
-                        CollectUseful(boxList, boxB);
-                        break;
-                    }
-                }
-            }
-
             bool uselessEvent = box is EventBox;
 
             foreach (Node node in box.Nodes)
