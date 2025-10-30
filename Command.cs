@@ -210,9 +210,9 @@ namespace VLSEdit
         {
             if (_amount == 0 || (Editor.Instance.Controller.DragState is not KVMControllerDragStateNone && Editor.Instance.Controller.DragState is not KVMControllerDragStateButton)) return;
 
-            double newScale = Math.Min(Editor.Instance.View.Scale / (1 - Editor.Instance.View.Scale * _amount * 0.4), 1);
+            double oldScale = Editor.Instance.View.Scale;
 
-            if (newScale < 0 || newScale == double.NaN) return;
+            Editor.Instance.View.Zoom(_amount * 0.2);
 
             double originX = SplashKit.MouseX();
             double originY = SplashKit.MouseY();
@@ -223,10 +223,8 @@ namespace VLSEdit
                 originY = Constants.WINDOW_HEIGHT / 2;
             }
 
-            Editor.Instance.View.OffsetX += (originX - Editor.Instance.View.OffsetX) * (1 - newScale / Editor.Instance.View.Scale);
-            Editor.Instance.View.OffsetY += (originY - Editor.Instance.View.OffsetY) * (1 - newScale / Editor.Instance.View.Scale);
-
-            Editor.Instance.View.Scale = newScale;
+            Editor.Instance.View.OffsetX += (originX - Editor.Instance.View.OffsetX) * (1 - Editor.Instance.View.Scale / oldScale);
+            Editor.Instance.View.OffsetY += (originY - Editor.Instance.View.OffsetY) * (1 - Editor.Instance.View.Scale / oldScale);
         }
     }
 }

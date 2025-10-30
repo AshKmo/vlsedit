@@ -10,6 +10,8 @@ namespace VLSEdit
 
         private double _offsetY;
 
+        private double _zoom = 0;
+
         private double _scale = 1;
 
         private System.Timers.Timer? _alertTimer = null;
@@ -32,21 +34,21 @@ namespace VLSEdit
 
         public ToolbarWidget Toolbar { get { return _toolbarWidget; } }
 
-        public double Scale { get { return _scale; } set { _scale = value; } }
+        public double Scale { get { return _scale; } }
 
         public KVMView()
         {
             double height = Constants.TOOLBAR_HEIGHT - 10;
 
-            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("save", "icons/save.png"), "Save", new SaveCommand()));
+            _toolbarWidget.AddButton(new ButtonWidget(5, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("save", "icons/save.svg"), "Save", new SaveCommand()));
 
-            _toolbarWidget.AddButton(new ButtonWidget(100, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("undo", "icons/undo.png"), "Undo", new ChangeStateCommand(false)));
-            _toolbarWidget.AddButton(new ButtonWidget(170, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("redo", "icons/redo.png"), "Redo", new ChangeStateCommand(true)));
+            _toolbarWidget.AddButton(new ButtonWidget(100, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("undo", "icons/undo.svg"), "Undo", new ChangeStateCommand(false)));
+            _toolbarWidget.AddButton(new ButtonWidget(170, 5, 65, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("redo", "icons/redo.svg"), "Redo", new ChangeStateCommand(true)));
 
-            _toolbarWidget.AddButton(new ButtonWidget(265, 5, 100, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("autoclean", "icons/autoclean.png"), "Auto Clean", new AutoCleanCommand()));
+            _toolbarWidget.AddButton(new ButtonWidget(265, 5, 100, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("autoclean", "icons/autoclean.svg"), "Auto Clean", new AutoCleanCommand()));
 
-            _toolbarWidget.AddButton(new ButtonWidget(395, 5, 95, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("zoomout", "icons/zoomout.png"), "Zoom Out", new ScaleCommand(-1, true)));
-            _toolbarWidget.AddButton(new ButtonWidget(495, 5, 85, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("zoomin", "icons/zoomin.png"), "Zoom In", new ScaleCommand(1, true)));
+            _toolbarWidget.AddButton(new ButtonWidget(395, 5, 95, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("zoomout", "icons/zoomout.svg"), "Zoom Out", new ScaleCommand(-1, true)));
+            _toolbarWidget.AddButton(new ButtonWidget(495, 5, 85, height, 7, Constants.TOOLBAR_BUTTON_COLOR, Constants.TOOLBAR_BUTTON_COLOR_CLICKING, SplashKit.LoadBitmap("zoomin", "icons/zoomin.svg"), "Zoom In", new ScaleCommand(1, true)));
         }
 
         public void Draw()
@@ -57,7 +59,7 @@ namespace VLSEdit
             {
                 if (!BoxWidgetOnScreen(boxWidget)) continue;
 
-                boxWidget.Draw(_offsetX, _offsetY, _scale);
+                boxWidget.Draw(_offsetX, _offsetY, Scale);
             }
 
             foreach (BoxWidget boxWidgetA in _boxWidgets)
@@ -141,12 +143,19 @@ namespace VLSEdit
 
         private bool BoxWidgetOnScreen(BoxWidget boxWidget)
         {
-            double screenX = OffsetX + boxWidget.X * _scale;
-            double screenY = OffsetY + boxWidget.Y * _scale;
+            double screenX = OffsetX + boxWidget.X * Scale;
+            double screenY = OffsetY + boxWidget.Y * Scale;
 
             return
-                (screenX + Constants.BOX_WIDTH >= 0 && screenX < Constants.WINDOW_WIDTH) &&
-                (screenY + boxWidget.Height >= 0 && screenY < Constants.WINDOW_HEIGHT);
+                (screenX + Constants.BOX_WIDTH * Scale >= 0 && screenX < Constants.WINDOW_WIDTH) &&
+                (screenY + boxWidget.Height * Scale >= 0 && screenY < Constants.WINDOW_HEIGHT);
+        }
+
+        public void Zoom(double amount)
+        {
+            _zoom = Math.Min(_zoom + amount, 0);
+
+            _scale = Math.Pow(2, _zoom);
         }
     }
 }

@@ -112,11 +112,11 @@ namespace VLSEdit
             if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
             {
                 SplashKit.DrawText(_box.Name, Color.Black, Constants.FONT_PATH, (int)Math.Round(16 * scale), screenX + 5 * scale, screenY + 3 * scale);
-            }
 
-            foreach (ButtonWidget buttonWidget in _buttonWidgets)
-            {
-                buttonWidget.Draw(screenX, screenY, scale);
+                foreach (ButtonWidget buttonWidget in _buttonWidgets)
+                {
+                    buttonWidget.Draw(screenX, screenY, scale);
+                }
             }
 
             foreach (NodeWidget nodeWidget in _nodeWidgets)
@@ -283,7 +283,12 @@ namespace VLSEdit
             bitmapOptions.ScaleX = (float)scale;
             bitmapOptions.ScaleY = (float)scale;
 
-            SplashKit.DrawBitmap(_icon, screenX + _leftPad * scale - 1.5 / scale, screenY + (_height * scale - _icon.Height) / 2, bitmapOptions);
+            // A dodgy hack was used here
+            // There appears to be a glitch in SplashKit where images are not drawn in the correct position when scaled
+            // I've tried a few mathematical functions to counteract this, and this one seems to work decently enough
+            double bogusOffset = 9 * Math.Log2(scale) * scale;
+
+            SplashKit.DrawBitmap(_icon, screenX + _leftPad * scale + bogusOffset, screenY + (_height * scale - _icon.Height) / 2, bitmapOptions);
 
             SplashKit.DrawText(_text, Color.Black, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + (_icon.Width + 10) * scale, screenY + 5 * scale);
         }

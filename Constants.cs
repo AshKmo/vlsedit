@@ -48,10 +48,10 @@ namespace VLSEdit
 
         public static uint FRAMERATE = 60;
 
-        public static Bitmap BUTTON_DELETE_BITMAP = SplashKit.LoadBitmap("delete", "icons/delete.png");
+        public static Bitmap BUTTON_DELETE_BITMAP = SplashKit.LoadBitmap("delete", "icons/delete.svg");
 
-        public static Bitmap BUTTON_CLONE_BITMAP = SplashKit.LoadBitmap("clone", "icons/clone.png");
+        public static Bitmap BUTTON_CLONE_BITMAP = SplashKit.LoadBitmap("clone", "icons/clone.svg");
 
-        public static Bitmap BUTTON_SETVALUE_BITMAP = SplashKit.LoadBitmap("setvalue", "icons/setvalue.png");
+        public static Bitmap BUTTON_SETVALUE_BITMAP = SplashKit.LoadBitmap("setvalue", "icons/setvalue.svg");
     }
 }

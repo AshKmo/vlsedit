@@ -22,7 +22,7 @@ namespace VLSEdit
 
                         Window window = new Window("VLSEdit: " + scriptPath, Constants.WINDOW_WIDTH, Constants.WINDOW_HEIGHT);
 
-                        SplashKit.WindowSetIcon(window, SplashKit.LoadBitmap("icon", "icons/icon.png"));
+                        SplashKit.WindowSetIcon(window, SplashKit.LoadBitmap("icon", "icons/icon.svg"));
 
                         while (!window.CloseRequested)
                         {
