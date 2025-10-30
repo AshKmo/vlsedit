@@ -42,10 +42,6 @@ namespace VLSEdit
 
         public static Color TRANSPARENT_COLOR = SplashKit.RGBAColor(0, 0, 0, 0);
 
-        public static string FONT_NAME = "Roboto";
-
-        public static string FONT_PATH = "roboto.ttf";
-
         public static uint FRAMERATE = 60;
 
         public static Bitmap BUTTON_DELETE_BITMAP = SplashKit.LoadBitmap("delete", "icons/delete.svg");
@@ -53,5 +49,7 @@ namespace VLSEdit
         public static Bitmap BUTTON_CLONE_BITMAP = SplashKit.LoadBitmap("clone", "icons/clone.svg");
 
         public static Bitmap BUTTON_SETVALUE_BITMAP = SplashKit.LoadBitmap("setvalue", "icons/setvalue.svg");
+
+        public static Font FONT_ROBOTO = SplashKit.LoadFont("roboto", "roboto.ttf");
     }
 }

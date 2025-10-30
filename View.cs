@@ -99,7 +99,7 @@ namespace VLSEdit
 
                 if (_alertText != null)
                 {
-                    SplashKit.DrawText(_alertText, Color.White, Constants.FONT_PATH, 20, 10, Constants.WINDOW_HEIGHT - 35);
+                    SplashKit.DrawText(_alertText, Color.White, Constants.FONT_ROBOTO, 20, 10, Constants.WINDOW_HEIGHT - 35);
                 }
             }
 

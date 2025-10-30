@@ -111,7 +111,7 @@ namespace VLSEdit
 
             if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
             {
-                SplashKit.DrawText(_box.Name, Color.Black, Constants.FONT_PATH, (int)Math.Round(16 * scale), screenX + 5 * scale, screenY + 3 * scale);
+                SplashKit.DrawText(_box.Name, Color.Black, Constants.FONT_ROBOTO, (int)Math.Round(16 * scale), screenX + 5 * scale, screenY + 3 * scale);
 
                 foreach (ButtonWidget buttonWidget in _buttonWidgets)
                 {
@@ -156,7 +156,7 @@ namespace VLSEdit
 
                 if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
                 {
-                    SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + 15 * scale, screenY - 8 * scale);
+                    SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_ROBOTO, (int)Math.Round(14 * scale), screenX + 15 * scale, screenY - 8 * scale);
                 }
             }
             else
@@ -165,7 +165,7 @@ namespace VLSEdit
 
                 if (Editor.Instance.View.Scale >= Constants.HIGH_DETAIL_SCALE)
                 {
-                    SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + (15 - Constants.NODE_WIDTH) * scale, screenY - 8 * scale);
+                    SplashKit.DrawText(_node.Name, Color.White, Constants.FONT_ROBOTO, (int)Math.Round(14 * scale), screenX + (15 - Constants.NODE_WIDTH) * scale, screenY - 8 * scale);
                 }
             }
         }
@@ -290,7 +290,7 @@ namespace VLSEdit
 
             SplashKit.DrawBitmap(_icon, screenX + _leftPad * scale + bogusOffset, screenY + (_height * scale - _icon.Height) / 2, bitmapOptions);
 
-            SplashKit.DrawText(_text, Color.Black, Constants.FONT_PATH, (int)Math.Round(14 * scale), screenX + (_icon.Width + 10) * scale, screenY + 5 * scale);
+            SplashKit.DrawText(_text, Color.Black, Constants.FONT_ROBOTO, (int)Math.Round(14 * scale), screenX + (_icon.Width + 10) * scale, screenY + 5 * scale);
         }
 
         public override bool PointWithin(double offsetX, double offsetY, double scale, Point2D point)

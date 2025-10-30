@@ -54,7 +54,7 @@ namespace VLSEdit
         {
             Editor.Instance.Save();
 
-            Editor.Instance.View.Alert("Saved successfully", 2000);
+            Editor.Instance.View.Alert("Saved successfully", 1500);
         }
     }
 
