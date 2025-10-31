@@ -94,6 +94,17 @@ namespace VLSEdit
             double screenX = offsetX + X * scale;
             double screenY = offsetY + Y * scale;
 
+            if (!Box.Mutable)
+            {
+                SplashKit.DrawRectangle(
+                    Constants.BOX_IMMUTABLE_OUTLINE_COLOR,
+                    screenX - Constants.BOX_OUTLINE_WIDTH * scale,
+                    screenY - Constants.BOX_OUTLINE_WIDTH * scale,
+                    (Constants.BOX_WIDTH + Constants.BOX_OUTLINE_WIDTH * 2) * scale,
+                    (_height + Constants.BOX_OUTLINE_WIDTH * 2) * scale
+                );
+            }
+
             if (_selected)
             {
                 SplashKit.FillRectangle(

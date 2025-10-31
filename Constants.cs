@@ -38,6 +38,8 @@ namespace VLSEdit
 
         public static Color BOX_OUTLINE_COLOR = Color.White;
 
+        public static Color BOX_IMMUTABLE_OUTLINE_COLOR = Color.LimeGreen;
+
         public static Color LINK_LINE_COLOR = Color.White;
 
         public static Color TRANSPARENT_COLOR = SplashKit.RGBAColor(0, 0, 0, 0);
