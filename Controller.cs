@@ -288,6 +288,11 @@ namespace VLSEdit
                     new SaveCommand().Execute();
                 }
 
+                if (SplashKit.KeyTyped(KeyCode.DKey))
+                {
+                    new AutoCleanCommand().Execute();
+                }
+
                 if (SplashKit.KeyTyped(KeyCode.ZKey) || SplashKit.KeyTyped(KeyCode.YKey))
                 {
                     new ChangeStateCommand(SplashKit.KeyTyped(KeyCode.YKey)).Execute();
