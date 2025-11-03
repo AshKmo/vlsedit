@@ -73,16 +73,18 @@ namespace VLSEdit
                     serverNodeY += Constants.NODE_HEIGHT;
                 }
 
-                _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 20, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_CLONE_BITMAP, "", new CloneBoxCommand(_box)));
+                _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 20, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_HELP_BITMAP, "", new HelpCommand(_box)));
+
+                _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 40, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_CLONE_BITMAP, "", new CloneBoxCommand(_box)));
 
                 if (_box.Mutable)
                 {
-                    _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 40, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_DELETE_BITMAP, "", new DeleteBoxCommand(this)));
+                    _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 60, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_DELETE_BITMAP, "", new DeleteBoxCommand(this)));
                 }
 
                 if (_box is IValueSettable && _box.Mutable)
                 {
-                    _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 60, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_SETVALUE_BITMAP, "", new SetBoxValueCommand(_box)));
+                    _buttonWidgets.Add(new ButtonWidget(Constants.BOX_WIDTH - 80, 5, 15, 15, 0, Constants.TRANSPARENT_COLOR, Color.White, Constants.BUTTON_SETVALUE_BITMAP, "", new SetBoxValueCommand(_box)));
                 }
             }
 

@@ -4,11 +4,16 @@ namespace VLSEdit
     {
         private string _name;
 
+        private string _description;
+
         public string Name { get { return _name; } set { _name = value; } }
 
-        protected Node(string name)
+        public string Description { get { return _description; } }
+
+        protected Node(string name, string desc)
         {
             _name = name;
+            _description = desc;
         }
     }
 
@@ -18,7 +23,7 @@ namespace VLSEdit
 
         public ServerNode? To { get { return _to; } set { _to = value; } }
 
-        public ClientNode(string name) : base(name)
+        public ClientNode(string name, string desc) : base(name, desc)
         {
         }
 
@@ -43,7 +48,7 @@ namespace VLSEdit
 
         public Box Box { get { return _box; } }
 
-        public ServerNode(string name, Box box) : base(name)
+        public ServerNode(string name, string desc, Box box) : base(name, desc)
         {
             _box = box;
         }

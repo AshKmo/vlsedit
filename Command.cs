@@ -227,4 +227,19 @@ namespace VLSEdit
             Editor.Instance.View.OffsetY += (originY - Editor.Instance.View.OffsetY) * (1 - Editor.Instance.View.Scale / oldScale);
         }
     }
+
+    public class HelpCommand : Command
+    {
+        private IHelpful _helpful;
+
+        public HelpCommand(IHelpful helpful)
+        {
+            _helpful = helpful;
+        }
+
+        public override void Execute()
+        {
+            _helpful.ShowHelp();
+        }
+    }
 }

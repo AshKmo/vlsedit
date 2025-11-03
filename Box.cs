@@ -51,7 +51,7 @@ namespace VLSEdit
         ListIndex,
     }
 
-    public abstract class Box
+    public abstract class Box : IHelpful
     {
         private List<Node> _nodes = new List<Node>();
 
@@ -65,11 +65,44 @@ namespace VLSEdit
 
         public abstract string Name { get; }
 
+        public abstract string Description { get; }
+
         public abstract Color Color { get; }
 
         public bool Mutable { get { return _mutable; } set { _mutable = value; } }
 
         public abstract BoxType Type { get; }
+
+        public string HelpTitle
+        {
+            get
+            {
+                return Name;
+            }
+        }
+
+        public string HelpContent
+        {
+            get
+            {
+                string clients = "";
+                string servers = "";
+
+                foreach (Node node in Nodes)
+                {
+                    if (node is ClientNode)
+                    {
+                        clients += $"- {node.Name}: {node.Description}\n";
+                    }
+                    else
+                    {
+                        servers += $"- {node.Name}: {node.Description}\n";
+                    }
+                }
+
+                return $"{Description}\n\nClients:\n{clients}\nServers:\n{servers}";
+            }
+        }
 
         public double X
         {
@@ -279,9 +312,11 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _valueNode }; } }
 
+        public override string Description { get { return $"Returns {(Name.Length > 0 && "aeiouAEIOU".IndexOf(Name[0]) >= 0 ? "an" : "a")} {Name} value"; } }
+
         protected ValueBox()
         {
-            _valueNode = new ServerNode(Name, this);
+            _valueNode = new ServerNode(Name, "The value that is always returned by this box", this);
         }
 
         public override void Serialise(StringWriter writer)
@@ -486,7 +521,7 @@ namespace VLSEdit
     public class FalseBox : BoolBox
     {
         public override string Name { get { return "False"; } }
-        
+
         public override BoxType Type { get { return BoxType.False; } }
 
         public override bool Value { get { return false; } }
@@ -510,12 +545,12 @@ namespace VLSEdit
 
         private ServerNode _resultNode;
 
-        protected BinaryOpBox(string resultName, string inputNameA = "A", string inputNameB = "B")
+        protected BinaryOpBox(string resultName, string resultDesc, string inputNameA = "A", string inputNameB = "B")
         {
-            _aNode = new ClientNode(inputNameA);
-            _bNode = new ClientNode(inputNameB);
+            _aNode = new ClientNode(inputNameA, "The first operand");
+            _bNode = new ClientNode(inputNameB, "The second operand");
 
-            _resultNode = new ServerNode(resultName, this);
+            _resultNode = new ServerNode(resultName, resultDesc, this);
         }
 
         public override List<Node> Nodes { get { return new List<Node> { _aNode, _bNode, _resultNode }; } }
@@ -530,7 +565,7 @@ namespace VLSEdit
 
     public abstract class BinaryMathOpBox : BinaryOpBox
     {
-        protected BinaryMathOpBox(string resultName) : base(resultName)
+        protected BinaryMathOpBox(string resultName, string resultDesc) : base(resultName, resultDesc)
         {
         }
 
@@ -548,7 +583,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Add; } }
 
-        public AddBox() : base("A + B")
+        public override string Description { get { return "Returns the sum of its two operands"; } }
+
+        public AddBox() : base("A + B", "The sum of A and B")
         {
         }
 
@@ -569,7 +606,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Remainder; } }
 
-        public RemainderBox() : base("A % B")
+        public override string Description { get { return "Returns the remainder of a division operation"; } }
+
+        public RemainderBox() : base("A % B", "The remainder obtained from dividing A and B")
         {
         }
 
@@ -590,7 +629,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Concat; } }
 
-        public ConcatBox() : base("AB")
+        public override string Description { get { return "Joins two strings together"; } }
+
+        public ConcatBox() : base("AB", "A string containing all characters in A followed by all characters in B")
         {
         }
 
@@ -611,7 +652,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ListAdd; } }
 
-        public ListAddBox() : base("New list", "List", "Element")
+        public override string Description { get { return "Returns a copy of a list to which a value has been appended"; } }
+
+        public ListAddBox() : base("New list", "A new list containing all elements in the first list plus the new element", "List", "Element")
         {
         }
 
@@ -637,7 +680,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ListConcat; } }
 
-        public ListConcatBox() : base("Combined", "List A", "List B")
+        public override string Description { get { return "Returns a copy of a list to which all values in another list have been appended"; } }
+
+        public ListConcatBox() : base("Combined", "A new List containing all elements in A followed by all elements in B", "List A", "List B")
         {
         }
 
@@ -658,7 +703,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ListIndex; } }
 
-        public ListIndexBox() : base("Element", "List", "Index")
+        public override string Description { get { return "Returns the element in a list with a certain index"; } }
+
+        public ListIndexBox() : base("Element", "The list element at the specified index", "List", "Index")
         {
         }
 
@@ -684,7 +731,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ListCdr; } }
 
-        public ListCdrBox() : base("List", "Tail")
+        public override string Description { get { return "Returns a new list containing every element in a list except the first"; } }
+
+        public ListCdrBox() : base("List", "The list from which the first element should be removed", "Tail", "A copy of the input list from which the first element has been removed")
         {
         }
 
@@ -705,7 +754,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.LT; } }
 
-        public LTBox() : base("A < B")
+        public override string Description { get { return "Returns True only if its first operand is smaller than its second"; } }
+
+        public LTBox() : base("A < B", "A Boolean value that is True only if A is smaller than B")
         {
         }
 
@@ -726,7 +777,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.LTE; } }
 
-        public LTEBox() : base("A <= B")
+        public override string Description { get { return "Returns True only if its first operand is smaller than, or equal to, its second"; } }
+
+        public LTEBox() : base("A <= B", "A Boolean value that is True only if A is smaller than, or equal to, B")
         {
         }
 
@@ -743,7 +796,7 @@ namespace VLSEdit
 
     public abstract class LogicBox : BinaryOpBox
     {
-        protected LogicBox(string resultName) : base(resultName)
+        protected LogicBox(string resultName, string resultDesc) : base(resultName, resultDesc)
         {
         }
 
@@ -761,7 +814,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.And; } }
 
-        public AndBox() : base("A && B")
+        public override string Description { get { return "Returns True only if both its operands are True"; } }
+
+        public AndBox() : base("A && B", "A Boolean value that is only True if A and B are both True")
         {
         }
 
@@ -782,7 +837,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Or; } }
 
-        public OrBox() : base("A || B")
+        public override string Description { get { return "Returns True only if either, or both, of its operands are True"; } }
+
+        public OrBox() : base("A || B", "A Boolean value that is only True if either, or both, of A and B are True")
         {
         }
 
@@ -803,7 +860,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Multiply; } }
 
-        public MultiplyBox() : base("A * B")
+        public override string Description { get { return "Returns the product of its two operands"; } }
+
+        public MultiplyBox() : base("A * B", "The product of A and B")
         {
         }
 
@@ -824,7 +883,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Divide; } }
 
-        public DivideBox() : base("A / B")
+        public override string Description { get { return "Returns the result of dividing its first operand by its second"; } }
+
+        public DivideBox() : base("A / B", "The result of dividing A by B")
         {
         }
 
@@ -845,7 +906,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Subtract; } }
 
-        public SubtractBox() : base("A - B")
+        public override string Description { get { return "Returns the result of subtracting its second operand from its first"; } }
+
+        public SubtractBox() : base("A - B", "The result of subtracting B from A")
         {
         }
 
@@ -868,11 +931,11 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _inputNode, _resultNode }; } }
 
-        protected UnaryOpBox(string inputName, string outputName)
+        protected UnaryOpBox(string inputName, string inputDesc, string outputName, string outputDesc)
         {
-            _inputNode = new ClientNode(inputName);
+            _inputNode = new ClientNode(inputName, inputDesc);
 
-            _resultNode = new ServerNode(outputName, this);
+            _resultNode = new ServerNode(outputName, outputDesc, this);
         }
 
         public override Value Interpret(Value context, ServerNode node)
@@ -889,7 +952,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Negate; } }
 
-        public NegateBox() : base("X", "-X")
+        public override string Description { get { return "Returns the value of equal magnitude but opposite sign to its operand"; } }
+
+        public NegateBox() : base("X", "The value to find the negative of", "-X", "The negative of X")
         {
         }
 
@@ -910,7 +975,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Length; } }
 
-        public LengthBox() : base("Any", "Length")
+        public override string Description { get { return "Returns the length of the string or array passed to it"; } }
+
+        public LengthBox() : base("Any", "The value to find the length of", "Length", "The length of the value")
         {
         }
 
@@ -931,7 +998,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ToNumber; } }
 
-        public ToNumberBox() : base("String", "Number")
+        public override string Description { get { return "Attempts to convert a String value to a Number value"; } }
+
+        public ToNumberBox() : base("String", "The string to convert to a numeric value", "Number", "The numeric value described by the string")
         {
         }
 
@@ -959,7 +1028,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.ToString; } }
 
-        public ToStringBox() : base("Any", "String")
+        public override string Description { get { return "Converts any value to its string representation"; } }
+
+        public ToStringBox() : base("Any", "The value to convert to its string representation", "String", "The string representation of the value")
         {
         }
 
@@ -980,7 +1051,9 @@ namespace VLSEdit
 
         public override BoxType Type { get { return BoxType.Not; } }
 
-        public NotBox() : base("X", "!X")
+        public override string Description { get { return "Returns the logical inverse of a Boolean value"; } }
+
+        public NotBox() : base("X", "The Boolean value to find the logical inverse of", "!X", "The logical inverse of the value")
         {
         }
 
@@ -1009,12 +1082,14 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _aNode, _bNode }; } }
 
+        public override string Description { get { return "Returns True only if the values of its two operands are equal"; } }
+
         public EqualBox()
         {
-            _aNode = new ClientNode("A");
-            _bNode = new ClientNode("B");
+            _aNode = new ClientNode("A", "The first operand to compare");
+            _bNode = new ClientNode("B", "The second operand to compare");
 
-            _resultNode = new ServerNode("A == B", this);
+            _resultNode = new ServerNode("A == B", "The result of comparing the values of A and B", this);
         }
 
         public override EqualBox Clone()
@@ -1042,12 +1117,14 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _aNode, _bNode }; } }
 
+        public override string Description { get { return "Returns True only if the types of its two operands are equal"; } }
+
         public TypesEqualBox()
         {
-            _aNode = new ClientNode("A");
-            _bNode = new ClientNode("B");
+            _aNode = new ClientNode("A", "The first operand to compare");
+            _bNode = new ClientNode("B", "The second operand to compare");
 
-            _resultNode = new ServerNode("Result", this);
+            _resultNode = new ServerNode("Result", "The result of comparing the types of A and B", this);
         }
 
         public override TypesEqualBox Clone()
@@ -1077,13 +1154,15 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _stringNode, _startNode, _lengthNode }; } }
 
+        public override string Description { get { return "Returns a portion of a string"; } }
+
         public SubstringBox()
         {
-            _stringNode = new ClientNode("String");
-            _startNode = new ClientNode("Start");
-            _lengthNode = new ClientNode("Length");
+            _stringNode = new ClientNode("String", "The string in question");
+            _startNode = new ClientNode("Start", "The index of the first character in the string that should be included in the new substring");
+            _lengthNode = new ClientNode("Length", "The length of the new substring");
 
-            _resultNode = new ServerNode("Substring", this);
+            _resultNode = new ServerNode("Substring", "The new substring", this);
         }
 
         public override SubstringBox Clone()
@@ -1123,13 +1202,15 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _conditionNode, _trueNode, _falseNode }; } }
 
+        public override string Description { get { return "Evaluates and returns the value of one of two expressions based on the result of a condition"; } }
+
         public IfBox()
         {
-            _trueNode = new ClientNode("If True");
-            _falseNode = new ClientNode("Else");
-            _conditionNode = new ClientNode("Condition");
+            _trueNode = new ClientNode("If True", "The expression that should be evaluated and returned if the condition returns True");
+            _falseNode = new ClientNode("Else", "The expression that should be evaluated and returned if the condition returns False");
+            _conditionNode = new ClientNode("Condition", "The condition that will be used to determine the expression to evaluate and return");
 
-            _resultNode = new ServerNode("Result", this);
+            _resultNode = new ServerNode("Result", "The value returned by the chosen expression", this);
         }
 
         public override IfBox Clone()
@@ -1158,7 +1239,7 @@ namespace VLSEdit
 
         protected EventBox()
         {
-            _node = new ClientNode("Event");
+            _node = new ClientNode("Event", "Initiates the evaluation of an expression when the event occurs");
         }
 
         public void Trigger(Value context)
@@ -1172,6 +1253,8 @@ namespace VLSEdit
         public override string Name { get { return "Program Start"; } }
 
         public override BoxType Type { get { return BoxType.Start; } }
+
+        public override string Description { get { return "Initiates the evaluation of an expression when the program is started"; } }
 
         public StartBox()
         {
@@ -1192,6 +1275,8 @@ namespace VLSEdit
         public override BoxType Type { get { return BoxType.Subroutine; } }
 
         public Value Value { get { return new StringValue(_subName); } }
+
+        public override string Description { get { return "Evaluates an expression when the specified portal is accessed, and returns its value to the caller"; } }
 
         public SubroutineBox(string subName = "MyPortal")
         {
@@ -1245,9 +1330,9 @@ namespace VLSEdit
 
         public OutputBox()
         {
-            _eventNode = new ServerNode("Value", this);
+            _eventNode = new ServerNode("Value", "Returns the value that was printed to the screen", this);
 
-            _outputNode = new ClientNode("Output");
+            _outputNode = new ClientNode("Output", "The value whose string representation is to be printed to the screen");
         }
 
         public override Value Interpret(Value context, ServerNode _)
@@ -1267,6 +1352,8 @@ namespace VLSEdit
         public override string Name { get { return "Print"; } }
 
         public override BoxType Type { get { return BoxType.Print; } }
+
+        public override string Description { get { return "Prints a value to the screen, followed by a newline, and returns it"; } }
 
         public PrintBox()
         {
@@ -1288,6 +1375,8 @@ namespace VLSEdit
         public override string Name { get { return "Write"; } }
 
         public override BoxType Type { get { return BoxType.Write; } }
+
+        public override string Description { get { return "Prints a value to the screen and returns it"; } }
 
         public WriteBox()
         {
@@ -1316,11 +1405,13 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _questionNode }; } }
 
+        public override string Description { get { return "Asks the user a question and returns their answer"; } }
+
         public AskBox()
         {
-            _resultNode = new ServerNode("Answer", this);
+            _resultNode = new ServerNode("Answer", "A String value containing the user's response", this);
 
-            _questionNode = new ClientNode("Question");
+            _questionNode = new ClientNode("Question", "A String value specifying the question to ask the user");
         }
 
         public override AskBox Clone()
@@ -1359,13 +1450,15 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _calleeNode, _inputNode }; } }
 
+        public override string Description { get { return "Evaluates an expression using the specified call value"; } }
+
         public CallBox()
         {
-            _resultNode = new ServerNode("Result", this);
+            _resultNode = new ServerNode("Result", "The value of the target expression", this);
 
-            _calleeNode = new ClientNode("Target");
+            _calleeNode = new ClientNode("Target", "The expression to call");
 
-            _inputNode = new ClientNode("Argument");
+            _inputNode = new ClientNode("Argument", "The call value with which the target expression should be evaluated");
         }
 
         public override CallBox Clone()
@@ -1389,9 +1482,11 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode }; } }
 
+        public override string Description { get { return "Returns the value with which this expression was called"; } }
+
         public CallValueBox()
         {
-            _resultNode = new ServerNode("Call Value", this);
+            _resultNode = new ServerNode("Call Value", "The value with which this expression was called", this);
         }
 
         public override CallValueBox Clone()
@@ -1419,13 +1514,15 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _resultNode, _conditionNode, _processNode }; } }
 
+        public override string Description { get { return "Repeatedly evaluates an expression until a condition evaluates to False"; } }
+
         public WhileBox()
         {
-            _resultNode = new ServerNode("Last Value", this);
+            _resultNode = new ServerNode("Last Value", "The last value returned by the Body expression", this);
 
-            _conditionNode = new ClientNode("Condition");
+            _conditionNode = new ClientNode("Condition", "The expression that determines whether or not Body should be evaluated");
 
-            _processNode = new ClientNode("Body");
+            _processNode = new ClientNode("Body", "The expression to evaluate repeatedly");
         }
 
         public override WhileBox Clone()
@@ -1460,11 +1557,13 @@ namespace VLSEdit
 
         public Value Value { get { return new StringValue(_subName); } }
 
+        public override string Description { get { return "Returns the evaluation of the expression of the specified Portal"; } }
+
         public InvokeBox(string subName = "MyPortal")
         {
             _subName = subName;
 
-            _resultNode = new ServerNode(_subName, this);
+            _resultNode = new ServerNode(_subName, "The value returned by the evaluation of the expression of the Portal", this);
 
             SetValue(new StringValue(subName));
         }
@@ -1484,7 +1583,7 @@ namespace VLSEdit
                 }
             }
 
-            throw new Exception($"cannot find portal '{_subName}'");
+            throw new Exception($"cannot find a Portal named '{_subName}'");
         }
 
         public void SetValue(Value value)
@@ -1521,11 +1620,13 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _setNode, _getNode }; } }
 
+        public override string Description { get { return "Maintains an internal state"; } }
+
         public StateBox()
         {
-            _setNode = new ServerNode("Set", this);
+            _setNode = new ServerNode("Set", "When evaluated, the internal state of this Box is set to the call value", this);
 
-            _getNode = new ServerNode("Get", this);
+            _getNode = new ServerNode("Get", "The internal state of this Box", this);
         }
 
         public override StateBox Clone()
@@ -1558,12 +1659,14 @@ namespace VLSEdit
 
         public override List<Node> Nodes { get { return new List<Node> { _triggerNode, _firstAction, _secondAction }; } }
 
+        public override string Description { get { return "Evaluates its first operand, then evaluates its second operand and returns its value"; } }
+
         public SequenceBox()
         {
-            _triggerNode = new ServerNode("Value", this);
+            _triggerNode = new ServerNode("Value", "The returned value", this);
 
-            _firstAction = new ClientNode("Discard");
-            _secondAction = new ClientNode("Return");
+            _firstAction = new ClientNode("Discard", "The value to evaluate first");
+            _secondAction = new ClientNode("Return", "The value to evaluate second and return the value of");
         }
 
         public override SequenceBox Clone()

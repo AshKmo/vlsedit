@@ -14,7 +14,7 @@ namespace VLSEdit
 
             SplashKit.StartReadingText(rect);
 
-            while (SplashKit.CurrentWindow().ReadingText())
+            while (SplashKit.CurrentWindow().ReadingText() && !SplashKit.CurrentWindow().CloseRequested)
             {
                 SplashKit.ProcessEvents();
 
@@ -33,6 +33,39 @@ namespace VLSEdit
             if (SplashKit.TextEntryCancelled()) return null;
 
             return SplashKit.TextInput();
+        }
+
+        public static void ShowHelp(string title, string content)
+        {
+            if (!content.EndsWith("\n"))
+            {
+                content += "\n";
+            }
+
+            content = content + "\nPress any button to continue";
+
+            float startX = SplashKit.CurrentWindow().Width / 2 - 500;
+            float startY = SplashKit.CurrentWindow().Height / 2 - 300;
+
+            while (!SplashKit.CurrentWindow().CloseRequested)
+            {
+                SplashKit.ProcessEvents();
+
+                if (SplashKit.AnyKeyPressed() || SplashKit.MouseClicked(MouseButton.LeftButton) || SplashKit.MouseClicked(MouseButton.RightButton) || SplashKit.MouseClicked(MouseButton.MiddleButton)) break;
+
+                SplashKit.FillRectangle(Color.White, startX, startY, 1000, 600);
+
+                SplashKit.DrawText(title, Color.Black, Constants.FONT_ROBOTO, 30, startX + 20, startY + 20);
+
+                float contentY = startY + 65;
+                foreach (string line in content.Split("\n"))
+                {
+                    SplashKit.DrawText(line, Color.Black, Constants.FONT_ROBOTO, 20, startX + 20, contentY);
+                    contentY += 30;
+                }
+
+                SplashKit.CurrentWindow().Refresh(Constants.FRAMERATE);
+            }
         }
     }
 }

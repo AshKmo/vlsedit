@@ -46,6 +46,8 @@ namespace VLSEdit
 
         public static uint FRAMERATE = 60;
 
+        public static Bitmap BUTTON_HELP_BITMAP = SplashKit.LoadBitmap("help", "icons/help.svg");
+
         public static Bitmap BUTTON_DELETE_BITMAP = SplashKit.LoadBitmap("delete", "icons/delete.svg");
 
         public static Bitmap BUTTON_CLONE_BITMAP = SplashKit.LoadBitmap("clone", "icons/clone.svg");
