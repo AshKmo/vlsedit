@@ -7,7 +7,7 @@ namespace VLSEdit
     {
         public static string? Ask(string question)
         {
-            float startX = SplashKit.CurrentWindow().Width / 2 - 200;
+            float startX = SplashKit.CurrentWindow().Width / 2 - 300;
             float startY = SplashKit.CurrentWindow().Height / 2 - 50;
 
             Rectangle rect = SplashKit.RectangleFrom(startX + 20, startY + 50, 380, 100);
@@ -18,7 +18,7 @@ namespace VLSEdit
             {
                 SplashKit.ProcessEvents();
 
-                SplashKit.FillRectangle(Color.White, startX, startY, 400, 100);
+                SplashKit.FillRectangle(Color.White, startX, startY, 600, 100);
 
                 SplashKit.DrawText(question, Color.Black, Constants.FONT_ROBOTO, 20, startX + 20, startY + 20);
 
