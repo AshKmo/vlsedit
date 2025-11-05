@@ -46,6 +46,11 @@ namespace VLSEdit
                     }
                     break;
 
+                // NOTE: this subcommand is only used to generate the program's UML text and should not be used in normal operation of the program
+                case "printmeta":
+                    Meta.Generate();
+                    break;
+
                 default:
                     Console.WriteLine("Sub-command must be either 'run' or 'edit'");
                     return;
