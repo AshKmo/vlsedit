@@ -31,7 +31,15 @@ namespace VLSEdit
             return new Point2D() { X = _initialState.X + (SplashKit.MouseX() - _startMousePosition.X) / localScale, Y = _initialState.Y + (SplashKit.MouseY() - _startMousePosition.Y) / localScale };
         }
 
+        public virtual void Initiate()
+        {
+        }
+
         public virtual void UpdateTarget()
+        {
+        }
+
+        public virtual void Finalise()
         {
         }
     }
@@ -53,6 +61,33 @@ namespace VLSEdit
         {
             _selectedNodeWidget = widget;
         }
+
+        public override void Finalise()
+        {
+            BoxWidget? topBoxWidget = ObjectFinder.FindTopBoxWidget();
+
+            if (topBoxWidget == null || !topBoxWidget.Box.Mutable) return;
+
+            NodeWidget? nodeWidget = ObjectFinder.FindNodeWidget(topBoxWidget);
+
+            if (nodeWidget == null) return;
+
+            Node nodeA = _selectedNodeWidget.Node;
+            Node nodeB = nodeWidget.Node;
+
+            if (nodeA.GetType() == nodeB.GetType()) return;
+
+            if (nodeA is ServerNode)
+            {
+                Node tmp = nodeA;
+                nodeA = nodeB;
+                nodeB = tmp;
+            }
+
+            ((ClientNode)nodeA).To = (ServerNode)nodeB;
+
+            Editor.Instance.RegisterChange();
+        }
     }
 
     public class KVMControllerDragStateBox : KVMControllerDragState
@@ -66,12 +101,29 @@ namespace VLSEdit
             _selectedBoxWidget = widget;
         }
 
+        public override void Initiate()
+        {
+            Editor.Instance.SelectedBoxWidget = _selectedBoxWidget;
+            Editor.Instance.SelectedBoxWidget.Selected = true;
+
+            Editor.Instance.View.BoxWidgets.Remove(Editor.Instance.SelectedBoxWidget);
+            Editor.Instance.View.BoxWidgets.Add(Editor.Instance.SelectedBoxWidget);
+        }
+
         public override void UpdateTarget()
         {
             Point2D newState = NewState();
 
             _selectedBoxWidget.X = newState.X;
             _selectedBoxWidget.Y = newState.Y;
+        }
+
+        public override void Finalise()
+        {
+            if (!NewState().IsEqualTo(InitialState))
+            {
+                Editor.Instance.RegisterChange();
+            }
         }
     }
 
@@ -100,6 +152,18 @@ namespace VLSEdit
         {
             _selectedWidget = widget;
         }
+
+        public override void Initiate()
+        {
+            _selectedWidget.Clicking = true;
+        }
+
+        public override void Finalise()
+        {
+            _selectedWidget.Clicking = false;
+
+            _selectedWidget.ClickAction.Execute();
+        }
     }
 
     public class KVMController
@@ -116,135 +180,74 @@ namespace VLSEdit
         {
             if (SplashKit.MouseDown(MouseButton.LeftButton))
             {
-                switch (_dragState)
+                if (_dragState is KVMControllerDragStateNone)
                 {
-                    case KVMControllerDragStateNone:
-                        ButtonWidget? toolbarButtonWidget = FindToolbarButtonWidget();
+                    ButtonWidget? toolbarButtonWidget = ObjectFinder.FindToolbarButtonWidget();
 
-                        if (toolbarButtonWidget != null)
+                    if (toolbarButtonWidget != null)
+                    {
+                        _dragState = new KVMControllerDragStateButton(toolbarButtonWidget);
+
+                        toolbarButtonWidget.Clicking = true;
+                    }
+
+                    if (_dragState is KVMControllerDragStateNone)
+                    {
+                        foreach (BoxWidget boxWidget in Editor.Instance.View.BoxWidgets)
                         {
-                            _dragState = new KVMControllerDragStateButton(toolbarButtonWidget);
+                            Editor.Instance.SelectedBoxWidget = null;
 
-                            toolbarButtonWidget.Clicking = true;
-                        }
+                            boxWidget.Selected = false;
 
-                        if (_dragState is KVMControllerDragStateNone)
-                        {
-                            foreach (BoxWidget boxWidget in Editor.Instance.View.BoxWidgets)
+                            if (ObjectFinder.MouseWithinBoxWidget(boxWidget))
                             {
-                                Editor.Instance.SelectedBoxWidget = null;
+                                _dragState = new KVMControllerDragStateBox(boxWidget);
+                            }
 
-                                boxWidget.Selected = false;
+                            if (boxWidget.Box.Mutable)
+                            {
+                                NodeWidget? nodeWidget = ObjectFinder.FindNodeWidget(boxWidget);
 
-                                if (MouseWithinBoxWidget(boxWidget))
+                                if (nodeWidget != null)
                                 {
-                                    _dragState = new KVMControllerDragStateBox(boxWidget);
+                                    _dragState = new KVMControllerDragStateNode(nodeWidget);
                                 }
+                            }
 
-                                if (boxWidget.Box.Mutable)
+                            foreach (ButtonWidget buttonWidget in boxWidget.ButtonWidgets)
+                            {
+                                if (buttonWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X * Editor.Instance.View.Scale, Editor.Instance.View.OffsetY + boxWidget.Y * Editor.Instance.View.Scale, Editor.Instance.View.Scale, SplashKit.MousePosition()))
                                 {
-                                    NodeWidget? nodeWidget = FindNodeWidget(boxWidget);
-
-                                    if (nodeWidget != null)
-                                    {
-                                        _dragState = new KVMControllerDragStateNode(nodeWidget);
-                                    }
-                                }
-
-                                foreach (ButtonWidget buttonWidget in boxWidget.ButtonWidgets)
-                                {
-                                    if (buttonWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X * Editor.Instance.View.Scale, Editor.Instance.View.OffsetY + boxWidget.Y * Editor.Instance.View.Scale, Editor.Instance.View.Scale, SplashKit.MousePosition()))
-                                    {
-                                        _dragState = new KVMControllerDragStateButton(buttonWidget);
-                                    }
+                                    _dragState = new KVMControllerDragStateButton(buttonWidget);
                                 }
                             }
                         }
+                    }
 
-                        switch (_dragState)
-                        {
-                            case KVMControllerDragStateBox dragStateBox:
-                                Editor.Instance.SelectedBoxWidget = dragStateBox.SelectedBoxWidget;
-                                Editor.Instance.SelectedBoxWidget.Selected = true;
+                    if (_dragState is KVMControllerDragStateNone)
+                    {
+                        _dragState = new KVMControllerDragStateView();
+                    }
 
-                                Editor.Instance.View.BoxWidgets.Remove(Editor.Instance.SelectedBoxWidget);
-                                Editor.Instance.View.BoxWidgets.Add(Editor.Instance.SelectedBoxWidget);
-                                break;
-
-                            case KVMControllerDragStateNone:
-                                _dragState = new KVMControllerDragStateView();
-                                break;
-
-                            case KVMControllerDragStateButton dsb:
-                                dsb.SelectedWidget.Clicking = true;
-                                break;
-                        }
-
-                        break;
-
-                    case KVMControllerDragStateButton:
-                        break;
+                    _dragState.Initiate();
                 }
 
                 _dragState.UpdateTarget();
             }
             else
             {
-                switch (_dragState)
-                {
-                    case KVMControllerDragStateNode dragStateNode:
-                        BoxWidget? topBoxWidget = FindTopBoxWidget();
-
-                        if (topBoxWidget == null || !topBoxWidget.Box.Mutable) break;
-
-                        NodeWidget? nodeWidget = FindNodeWidget(topBoxWidget);
-
-                        if (nodeWidget == null) break;
-
-                        Node nodeA = dragStateNode.SelectedNodeWidget.Node;
-                        Node nodeB = nodeWidget.Node;
-
-                        if (nodeA.GetType() == nodeB.GetType()) break;
-
-                        if (nodeA is ServerNode)
-                        {
-                            Node tmp = nodeA;
-                            nodeA = nodeB;
-                            nodeB = tmp;
-                        }
-
-                        ((ClientNode)nodeA).To = (ServerNode)nodeB;
-
-                        Editor.Instance.RegisterChange();
-
-                        break;
-
-                    case KVMControllerDragStateButton cdsb:
-                        {
-                            cdsb.SelectedWidget.Clicking = false;
-
-                            cdsb.SelectedWidget.ClickAction.Execute();
-                        }
-                        break;
-
-                    case KVMControllerDragStateBox:
-                        if (!_dragState.NewState().IsEqualTo(_dragState.InitialState))
-                        {
-                            Editor.Instance.RegisterChange();
-                        }
-                        break;
-                }
+                _dragState.Finalise();
 
                 _dragState = new KVMControllerDragStateNone();
             }
 
             if (SplashKit.MouseClicked(MouseButton.RightButton))
             {
-                BoxWidget? topBoxWidget = FindTopBoxWidget();
+                BoxWidget? topBoxWidget = ObjectFinder.FindTopBoxWidget();
 
                 if (topBoxWidget != null)
                 {
-                    NodeWidget? nodeWidget = FindNodeWidget(topBoxWidget);
+                    NodeWidget? nodeWidget = ObjectFinder.FindNodeWidget(topBoxWidget);
 
                     if (nodeWidget == null)
                     {
@@ -315,53 +318,6 @@ namespace VLSEdit
             {
                 new ScaleCommand(SplashKit.MouseWheelScroll().Y).Execute();
             }
-        }
-
-        private bool MouseWithinBoxWidget(BoxWidget widget)
-        {
-            return widget.PointWithin(Editor.Instance.View.OffsetX, Editor.Instance.View.OffsetY, Editor.Instance.View.Scale, SplashKit.MousePosition());
-        }
-
-        private bool MouseWithinNodeWidget(BoxWidget boxWidget, NodeWidget nodeWidget)
-        {
-            return nodeWidget.PointWithin(Editor.Instance.View.OffsetX + boxWidget.X * Editor.Instance.View.Scale, Editor.Instance.View.OffsetY + boxWidget.Y * Editor.Instance.View.Scale, Editor.Instance.View.Scale, SplashKit.MousePosition());
-        }
-
-        private BoxWidget? FindTopBoxWidget()
-        {
-            BoxWidget? topBoxWidget = null;
-
-            foreach (BoxWidget boxWidget in Editor.Instance.View.BoxWidgets)
-            {
-                if (!MouseWithinBoxWidget(boxWidget)) continue;
-
-                topBoxWidget = boxWidget;
-            }
-
-            return topBoxWidget;
-        }
-
-        private NodeWidget? FindNodeWidget(BoxWidget boxWidget)
-        {
-            foreach (NodeWidget nodeWidget in boxWidget.NodeWidgets)
-            {
-                if (MouseWithinNodeWidget(boxWidget, nodeWidget)) return nodeWidget;
-            }
-
-            return null;
-        }
-
-        private ButtonWidget? FindToolbarButtonWidget()
-        {
-            foreach (ButtonWidget buttonWidget in Editor.Instance.View.Toolbar.Buttons)
-            {
-                if (buttonWidget.PointWithin(0, 0, 1, SplashKit.MousePosition()))
-                {
-                    return buttonWidget;
-                }
-            }
-
-            return null;
         }
     }
 }
