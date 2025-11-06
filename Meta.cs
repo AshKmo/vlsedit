@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Reflection.Metadata;
 
 // NOTE: THIS CODE IS ONLY USED TO GENERATE THE PROGRAM'S UML TEXT AND IS NOT USED IN NORMAL OPERATION OF THE PROGRAM
 
@@ -8,6 +9,8 @@ namespace VLSEdit
     {
         public static void Generate()
         {
+            BindingFlags allFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+
             Type[] types = Assembly.GetExecutingAssembly().GetTypes().Where(t => String.Equals(t.Namespace, "VLSEdit", StringComparison.Ordinal)).ToArray();
 
             foreach (Type type in types)
@@ -19,7 +22,7 @@ namespace VLSEdit
 
                 bool has = false;
 
-                foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
+                foreach (FieldInfo field in type.GetFields(allFlags))
                 {
                     if (field.DeclaringType != type) continue;
 
@@ -35,7 +38,7 @@ namespace VLSEdit
 
                 has = false;
 
-                foreach (PropertyInfo property in type.GetProperties())
+                foreach (PropertyInfo property in type.GetProperties(allFlags))
                 {
                     if (property.DeclaringType != type) continue;
 
@@ -58,8 +61,10 @@ namespace VLSEdit
 
                 has = false;
 
-                foreach (ConstructorInfo constructor in type.GetConstructors())
+                foreach (ConstructorInfo constructor in type.GetConstructors(allFlags))
                 {
+                    if (type.IsAbstract) break;
+
                     Console.WriteLine($"{TypeIndicator(constructor)}{type.Name}({String.Join(", ", constructor.GetParameters().ToList().Select(x => $"{GetFriendlyTypeName(x.ParameterType)} {x.Name}"))})");
 
                     has = true;
@@ -72,13 +77,13 @@ namespace VLSEdit
 
                 has = false;
 
-                foreach (MethodInfo method in type.GetMethods())
+                foreach (MethodInfo method in type.GetMethods(allFlags))
                 {
                     if (method.DeclaringType != type) continue;
 
                     if (method.Name.StartsWith("get_") || method.Name.StartsWith("set_") || method.DeclaringType != type) continue;
 
-                    Console.WriteLine($"{TypeIndicator(method)}{method.Name}({String.Join(", ", method.GetParameters().ToList().Select(x => $"{GetFriendlyTypeName(x.ParameterType)} {x.Name}"))}){ReturnTypeName(method)}{GetModifiers(method)}");
+                    Console.WriteLine($"{TypeIndicator(method)}{method.Name}({String.Join(", ", method.GetParameters().ToList().Select(x => $"{GetFriendlyTypeName(x.ParameterType)} {x.Name}"))}){ReturnTypeName(method)}{GetModifiers(method, type)}");
 
                     has = true;
                 }
@@ -97,12 +102,25 @@ namespace VLSEdit
 
         private static string Inheritance(Type type)
         {
+            List<string> modifiers = new List<string>();
+
             if (type.BaseType != null && type.BaseType != typeof(Object))
             {
-                return $" : {GetFriendlyTypeName(type.BaseType)}";
+                modifiers.Add(GetFriendlyTypeName(type.BaseType));
             }
 
-            return "";
+            foreach (Type inter in type.GetInterfaces())
+            {
+                if (type.BaseType?.GetInterfaces().Contains(inter) ?? false) continue;
+                modifiers.Add(GetFriendlyTypeName(inter));
+            }
+
+            if (modifiers.Count == 0)
+            {
+                return "";
+            }
+
+            return $" : {String.Join(", ", modifiers)}";
         }
 
         private static string TypeIndicator(PropertyInfo info)
@@ -175,7 +193,7 @@ namespace VLSEdit
             return modifiers.Count == 0 ? "" : $" <<{String.Join(", ", modifiers)}>>";
         }
 
-        private static string GetModifiers(MethodInfo method)
+        private static string GetModifiers(MethodInfo method, Type type)
         {
             List<string> modifiers = new List<string>();
 
@@ -189,9 +207,16 @@ namespace VLSEdit
                 modifiers.Add("abstract");
             }
 
-            if (method.IsVirtual)
+            if (method.IsVirtual && !method.IsAbstract)
             {
-                modifiers.Add("virtual");
+                if (!method.Equals(method.GetBaseDefinition()) || OverridesAbstractBaseMethod(method))
+                {
+                    //modifiers.Add("override");
+                }
+                else
+                {
+                    modifiers.Add("virtual");
+                }
             }
 
             return modifiers.Count == 0 ? "" : $" <<{String.Join(", ", modifiers)}>>";
@@ -211,9 +236,16 @@ namespace VLSEdit
                 modifiers.Add("abstract");
             }
 
-            if ((property.GetMethod?.IsVirtual ?? false) || (property.SetMethod?.IsVirtual ?? false))
+            if ((property.GetMethod?.IsVirtual ?? false) && (!property.GetMethod?.IsAbstract ?? false) || (property.SetMethod?.IsVirtual ?? false) && (!property.SetMethod?.IsAbstract ?? false))
             {
-                modifiers.Add("virtual");
+                if (property.GetMethod?.GetBaseDefinition().DeclaringType != property.GetMethod?.DeclaringType || property.SetMethod?.GetBaseDefinition().DeclaringType != property.SetMethod?.DeclaringType)
+                {
+                    //modifiers.Add("override");
+                }
+                else
+                {
+                    modifiers.Add("virtual");
+                }
             }
 
             if (property.SetMethod == null)
@@ -241,6 +273,56 @@ namespace VLSEdit
             }
 
             return modifiers.Count == 0 ? "" : $" <<{String.Join(", ", modifiers)}>>";
+        }
+
+        public static bool OverridesAbstractBaseMethod(MethodInfo method)
+        {
+            if (method == null)
+                throw new ArgumentNullException(nameof(method));
+
+            if (!method.IsVirtual || method.IsAbstract)
+                return false;
+
+            var current = method;
+            var baseType = method.DeclaringType?.BaseType;
+
+            while (baseType != null)
+            {
+                var candidates = baseType.GetMethods(
+                    BindingFlags.Public | BindingFlags.NonPublic |
+                    BindingFlags.Instance | BindingFlags.DeclaredOnly);
+
+                foreach (var candidate in candidates)
+                {
+                    if (!candidate.IsVirtual)
+                        continue;
+
+                    // Compare signature (name + parameters)
+                    if (candidate.Name == current.Name &&
+                        ParametersMatch(candidate, current))
+                    {
+                        // Found the overridden base method
+                        return candidate.IsAbstract;
+                    }
+                }
+
+                baseType = baseType.BaseType;
+            }
+
+            return false;
+        }
+
+        private static bool ParametersMatch(MethodInfo a, MethodInfo b)
+        {
+            var pa = a.GetParameters();
+            var pb = b.GetParameters();
+            if (pa.Length != pb.Length) return false;
+
+            for (int i = 0; i < pa.Length; i++)
+                if (pa[i].ParameterType != pb[i].ParameterType)
+                    return false;
+
+            return true;
         }
     }
 }
