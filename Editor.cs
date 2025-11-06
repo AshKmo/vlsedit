@@ -26,6 +26,13 @@ namespace VLSEdit
 
         public KVMController Controller { get { return _controller; } }
 
+        public bool DocumentChanged {
+            get
+            {
+                return _undoStateManager.DocumentChanged;
+            }
+        }
+
         public static Editor Instance
         {
             get

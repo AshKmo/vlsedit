@@ -33,6 +33,11 @@ namespace VLSEdit
                             SplashKit.RefreshScreen(Constants.FRAMERATE);
                         }
 
+                        if (Editor.Instance.DocumentChanged)
+                        {
+                            new SaveCommand().Execute();
+                        }
+
                         window.Close();
                     }
                     break;

@@ -6,6 +6,14 @@ namespace VLSEdit
 
         private int _stateIndex = 0;
 
+        public bool DocumentChanged
+        {
+            get
+            {
+                return _states.Count == 1;
+            }
+        }
+
         public UndoStateManager()
         {
         }
