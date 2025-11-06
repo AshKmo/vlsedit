@@ -10,7 +10,7 @@ namespace VLSEdit
         {
             get
             {
-                return _states.Count == 1;
+                return _states.Count != 1;
             }
         }
 
