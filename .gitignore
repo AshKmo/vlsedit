@@ -3,6 +3,7 @@ lib/
 obj/
 build/
 planning/
+.vscode/
 
 myeasylog.log
 
