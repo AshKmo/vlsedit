@@ -207,19 +207,17 @@ namespace VLSEdit
                 modifiers.Add("abstract");
             }
 
-            if (method.IsVirtual && !method.IsAbstract)
+            if (IsActuallyVirtual(method))
             {
-                if (!method.Equals(method.GetBaseDefinition()) || OverridesAbstractBaseMethod(method))
-                {
-                    //modifiers.Add("override");
-                }
-                else
-                {
-                    modifiers.Add("virtual");
-                }
+                modifiers.Add("virtual");
             }
 
             return modifiers.Count == 0 ? "" : $" <<{String.Join(", ", modifiers)}>>";
+        }
+
+        private static bool IsActuallyVirtual(MethodInfo method)
+        {
+            return method.IsVirtual && !method.IsAbstract && method.Equals(method.GetBaseDefinition()) && !OverridesAbstractBaseMethod(method) && !ImplementsInterfaceMethod(method);
         }
 
         private static string GetModifiers(PropertyInfo property)
@@ -236,16 +234,9 @@ namespace VLSEdit
                 modifiers.Add("abstract");
             }
 
-            if ((property.GetMethod?.IsVirtual ?? false) && (!property.GetMethod?.IsAbstract ?? false) || (property.SetMethod?.IsVirtual ?? false) && (!property.SetMethod?.IsAbstract ?? false))
+            if (property.GetMethod != null && IsActuallyVirtual(property.GetMethod) || property.SetMethod != null && IsActuallyVirtual(property.SetMethod))
             {
-                if (property.GetMethod?.GetBaseDefinition().DeclaringType != property.GetMethod?.DeclaringType || property.SetMethod?.GetBaseDefinition().DeclaringType != property.SetMethod?.DeclaringType)
-                {
-                    //modifiers.Add("override");
-                }
-                else
-                {
-                    modifiers.Add("virtual");
-                }
+                modifiers.Add("virtual");
             }
 
             if (property.SetMethod == null)
@@ -273,6 +264,19 @@ namespace VLSEdit
             }
 
             return modifiers.Count == 0 ? "" : $" <<{String.Join(", ", modifiers)}>>";
+        }
+
+        public static bool ImplementsInterfaceMethod(MethodInfo method)
+        {
+            Type? type = method.DeclaringType;
+            if (type == null) return false;
+            foreach (var iface in type.GetInterfaces())
+            {
+                var map = type.GetInterfaceMap(iface);
+                if (Array.Exists(map.TargetMethods, m => m == method))
+                    return true;
+            }
+            return false;
         }
 
         public static bool OverridesAbstractBaseMethod(MethodInfo method)
