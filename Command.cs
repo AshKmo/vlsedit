@@ -1,6 +1,4 @@
-using System.Security.Cryptography.X509Certificates;
 using SplashKitSDK;
-using VLSEdit;
 
 namespace VLSEdit
 {

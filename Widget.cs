@@ -1,6 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.Data.Common;
-using System.Runtime.CompilerServices;
 using SplashKitSDK;
 
 namespace VLSEdit

@@ -1,4 +1,3 @@
-using System.ComponentModel.Design;
 using SplashKitSDK;
 
 namespace VLSEdit

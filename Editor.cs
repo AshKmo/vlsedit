@@ -1,5 +1,3 @@
-using SplashKitSDK;
-
 namespace VLSEdit
 {
     public class Editor

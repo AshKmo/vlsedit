@@ -1,4 +1,3 @@
-using System.Reflection.Metadata;
 using SplashKitSDK;
 
 namespace VLSEdit
