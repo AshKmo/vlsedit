@@ -4,5 +4,8 @@ VLSEdit is an editor and interpreter for a new visual programming language calle
 - [VLSEdit's design and features](docco/design-report.pdf)
 - [How to use VLSEdit](docco/usage-documentation.pdf)
 
+## Running
+Have a look at the latest release under "Releases" on GitHub to download and run VLSEdit.
+
 ## Building
 VLSEdit requires .NET 10.0 and [Splashkit](splashkit.io). Once those have been installed, run `dotnet build` to build VLSEdit, or run `dotnet run edit <file>.vls` or `dotnet run run <file>.vls` to run it from the source.
