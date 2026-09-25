@@ -2,6 +2,7 @@ bin/
 obj/
 build/
 .vscode/
+github/
 
 myeasylog.log
 
